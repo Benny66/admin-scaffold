@@ -140,3 +140,9 @@ npm run dev
 - **统一响应**：`{code, message, data}` + 分页 `{list, total, page, page_size}`。
 - **三层配置**：默认值 → YAML → 环境变量，逐层覆盖。
 - **双数据库**：SQLite（开箱即用）+ MySQL（生产），自动迁移建表 + 初始化基础数据。
+
+---
+
+## License
+
+[MIT](./LICENSE) © Benny66
