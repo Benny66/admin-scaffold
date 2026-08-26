@@ -1,0 +1,27 @@
+# Base Backend 配置示例
+# 复制本文件为 config.yaml 并按需修改；未配置的字段使用代码内默认值。
+
+app:
+  name: ""            # 系统名称（留空使用前端标题）
+  subtitle: "企业管理系统"
+  footer: ""
+
+server:
+  port: "8080"
+  mode: "debug"       # debug | release
+
+database:
+  type: "sqlite"      # sqlite | mysql
+  sqlite:
+    dsn: "./base_backend.db"
+  mysql:
+    host: "127.0.0.1"
+    port: "3306"
+    username: "root"
+    password: ""
+    database: "base_backend"
+    charset: "utf8mb4"
+
+jwt:
+  secret: "base-backend-secret-key-change-me"
+  expire_seconds: 3600

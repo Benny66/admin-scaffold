@@ -1,0 +1,32 @@
+# 依赖与构建产物
+node_modules/
+dist/
+dist-mobile/
+*.log
+
+# 数据库文件
+*.db
+*.db-shm
+*.db-wal
+
+# 编译产物
+*.exe
+*.test
+*.out
+backend/asset-management
+
+# 合并冲突残留
+*.orig
+*.rej
+
+# Vite 临时文件
+vite.config.js.timestamp-*.mjs
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 运行时生成
+uploads/*
+!uploads/.gitkeep
+config.yaml
