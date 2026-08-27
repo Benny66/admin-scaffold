@@ -12,15 +12,14 @@
 - 路径别名 `@` 指向 `src/`（前端与移动端一致）。
 - 字段 JSON tag 统一 snake_case（如 `real_name`、`created_at`）。
 
-## 2. 禁止引入的依赖
+## 2. 依赖登记制
 
-以下依赖属于业务/商业化专属，基座 MUST NOT 引入：
+新增依赖 MUST 登记到根 [`deps.yaml`](deps.yaml) 并附一句理由，而非仅 `go get` / `npm install`。登记制由 `internal/guard/` 的依赖护栏测试强制：清单里的直接依赖未登记、或登记项不存在于清单，`make test` 都会失败。
 
-- 后端：`excelize`（导入导出）、资产编码/打印相关业务包
-- 前端：`echarts`、`jsbarcode`、`qrcode`
-- 移动端：`html5-qrcode`
+- 判据提示（非硬禁）：优先选择**可跨项目复用的通用依赖**（如 excelize 做导入导出、echarts 做图表、qrcode 做二维码），业务专属逻辑不进基座。
+- 具体项目若要引入这些通用库，只需在 `deps.yaml` 登记即可，不存在「禁止引入」清单。
 
-新增依赖 MUST 是可跨项目复用的通用依赖。
+详细说明见 [`docs/依赖管理.md`](docs/依赖管理.md)。
 
 ## 3. 干净性
 

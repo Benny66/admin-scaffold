@@ -1,0 +1,57 @@
+# 依赖登记表 —— 项目依赖的单一真相
+#
+# 新增依赖 MUST 在此登记并附一句理由，而非仅 `go get` / `npm install`。
+# guard 测试会双向校验本表与 go.mod / package.json 的一致性：
+#   1. 清单里的每个「直接依赖」都必须登记在此（漏登记 → 测试失败）
+#   2. 此处的每个登记项都必须真实存在于清单（僵尸条目 → 测试失败）
+#
+# 只登记「直接依赖」：go.mod 主 require 块（跳过 // indirect）、
+# package.json 的 dependencies（跳过 devDependencies）。
+#
+# 判据提示（非硬禁）：优先选择可跨项目复用的通用依赖，业务专属逻辑不进基座。
+
+backend:
+  - package: github.com/gin-gonic/gin
+    reason: HTTP 框架基座
+  - package: github.com/gin-contrib/cors
+    reason: 跨域中间件
+  - package: github.com/glebarez/sqlite
+    reason: SQLite 驱动（纯 Go，免 CGO）
+  - package: gorm.io/gorm
+    reason: ORM 基座
+  - package: gorm.io/driver/mysql
+    reason: MySQL 驱动
+  - package: github.com/golang-jwt/jwt/v5
+    reason: JWT 鉴权
+  - package: golang.org/x/crypto
+    reason: bcrypt 密码哈希
+  - package: gopkg.in/yaml.v3
+    reason: 解析 config.yaml 与 deps.yaml
+
+frontend:
+  - package: vue
+    reason: 前端框架
+  - package: vue-router
+    reason: 路由
+  - package: pinia
+    reason: 状态管理
+  - package: element-plus
+    reason: UI 组件库
+  - package: "@element-plus/icons-vue"
+    reason: 图标库
+  - package: axios
+    reason: HTTP 请求
+  - package: dayjs
+    reason: 日期处理
+
+mobile:
+  - package: vue
+    reason: 移动端框架
+  - package: vue-router
+    reason: 移动端路由
+  - package: pinia
+    reason: 移动端状态管理
+  - package: vant
+    reason: 移动端 UI 组件库
+  - package: axios
+    reason: 移动端 HTTP 请求
