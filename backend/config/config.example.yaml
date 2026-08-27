@@ -4,7 +4,9 @@
 app:
   name: ""            # 系统名称（留空使用代码默认值）
   subtitle: ""
-  footer: ""
+  footer: ""          # 页脚文字（前端 Layout 底部显示，留空不显示）
+  logo: "logo.png"    # 品牌 logo 文件名（放 backend/static/）
+  favicon: ""         # 浏览器标签图标文件名（放 backend/static/，留空回退 logo）
 
 server:
   port: "8080"

@@ -1,6 +1,10 @@
 <template>
   <div class="home-page">
-    <van-nav-bar :title="systemName" />
+    <van-nav-bar :title="systemName">
+      <template #left>
+        <van-image v-if="appStore.logo" :src="appStore.logo" width="28" height="28" fit="contain" />
+      </template>
+    </van-nav-bar>
 
     <div class="welcome">
       <van-image round width="60" height="60" src="https://img.yzcdn.cn/vant/cat.jpeg" />
@@ -18,12 +22,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()
 const userInfo = computed(() => appStore.userInfo)
 const systemName = computed(() => appStore.systemName || 'Base Admin')
+
+onMounted(() => {
+  appStore.fetchSystemInfo()
+})
 </script>
 
 <style scoped>

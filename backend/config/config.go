@@ -24,6 +24,8 @@ type AppConfig struct {
 	Name     string `yaml:"name"`     // 系统名称
 	Subtitle string `yaml:"subtitle"` // 系统副标题
 	Footer   string `yaml:"footer"`   // 页脚
+	Logo     string `yaml:"logo"`     // 品牌 logo 文件名（放 backend/static/）
+	Favicon  string `yaml:"favicon"`  // 浏览器标签图标文件名（放 backend/static/，缺省回退 logo）
 }
 
 // ServerConfig 服务器配置
@@ -80,6 +82,8 @@ func init() {
 			Name:     "",
 			Subtitle: "",
 			Footer:   "",
+			Logo:     "logo.png",
+			Favicon:  "",
 		},
 		Server: ServerConfig{
 			Port: "8080",
@@ -150,6 +154,8 @@ type yamlFile struct {
 		Name     string `yaml:"name"`
 		Subtitle string `yaml:"subtitle"`
 		Footer   string `yaml:"footer"`
+		Logo     string `yaml:"logo"`
+		Favicon  string `yaml:"favicon"`
 	} `yaml:"app"`
 	Server struct {
 		Port string `yaml:"port"`
@@ -208,6 +214,12 @@ func loadYAMLConfig() {
 	}
 	if yf.App.Footer != "" {
 		GlobalConfig.App.Footer = yf.App.Footer
+	}
+	if yf.App.Logo != "" {
+		GlobalConfig.App.Logo = yf.App.Logo
+	}
+	if yf.App.Favicon != "" {
+		GlobalConfig.App.Favicon = yf.App.Favicon
 	}
 	if yf.Server.Port != "" {
 		GlobalConfig.Server.Port = yf.Server.Port

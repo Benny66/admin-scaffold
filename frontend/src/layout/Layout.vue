@@ -3,7 +3,8 @@
     <!-- 侧边栏 -->
     <el-aside :width="isCollapse ? '64px' : '200px'" class="aside">
       <div class="logo">
-        <span v-if="!isCollapse">{{ systemName }}</span>
+        <img v-if="appStore.logo" :src="appStore.logo" class="logo-img" alt="logo" />
+        <span v-else-if="!isCollapse">{{ systemName }}</span>
         <span v-else>{{ (systemName || 'B').charAt(0) }}</span>
       </div>
       <el-menu
@@ -54,6 +55,7 @@
       <!-- 内容区 -->
       <el-main class="main">
         <router-view />
+        <div v-if="appStore.footer" class="app-footer">{{ appStore.footer }}</div>
       </el-main>
     </el-container>
 
@@ -165,6 +167,12 @@ onMounted(() => {
   font-weight: bold;
   white-space: nowrap;
 }
+.logo-img {
+  height: 36px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+}
 .menu {
   border-right: none;
 }
@@ -199,5 +207,13 @@ onMounted(() => {
   background-color: #f5f7fa;
   padding: 16px;
   overflow: auto;
+}
+.app-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+  border-top: 1px solid #e4e7ed;
 }
 </style>

@@ -1,6 +1,7 @@
 <template>
   <div class="login-page">
     <div class="login-header">
+      <van-image v-if="appStore.logo" :src="appStore.logo" width="56" height="56" fit="contain" class="login-logo" />
       <h1>{{ systemName }}</h1>
       <p>移动端</p>
     </div>
@@ -33,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { login } from '@/api'
@@ -43,6 +44,10 @@ const router = useRouter()
 const appStore = useAppStore()
 
 const systemName = computed(() => appStore.systemName || 'Base Admin')
+
+onMounted(() => {
+  appStore.fetchSystemInfo()
+})
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)
 
@@ -74,6 +79,9 @@ async function handleLogin() {
   text-align: center;
   color: #fff;
   margin-bottom: 40px;
+}
+.login-logo {
+  margin: 0 auto 12px;
 }
 .login-header h1 {
   font-size: 26px;

@@ -9,6 +9,9 @@ import (
 
 // SetupRouter 配置所有路由
 func SetupRouter(r *gin.Engine) {
+	// 静态文件服务：品牌图片（logo/favicon）放在 backend/static/，通过 /static/<file> 访问
+	r.Static("/static", "./static")
+
 	// API路由组
 	api := r.Group("/api")
 
