@@ -1,0 +1,12 @@
+{
+  "name": "base-scaffold",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Base 脚手架根目录 —— 承载跨端共享的 ESLint 工具链（单一真相，避免 frontend/mobile 各自安装造成版本漂移）",
+  "type": "module",
+  "devDependencies": {
+    "@eslint/js": "^9.9.0",
+    "eslint": "^9.9.0",
+    "eslint-plugin-vue": "^9.27.0"
+  }
+}

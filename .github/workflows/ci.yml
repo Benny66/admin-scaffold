@@ -50,6 +50,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
       - name: Build frontend
         working-directory: frontend
         run: npm run build
@@ -69,6 +73,10 @@ jobs:
       - name: Install dependencies
         working-directory: mobile
         run: npm ci
+
+      - name: Lint mobile
+        working-directory: mobile
+        run: npm run lint
 
       - name: Build mobile
         working-directory: mobile

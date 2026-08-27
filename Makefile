@@ -7,9 +7,11 @@
 test:
 	cd backend && go test ./...
 
-# 静态检查
+# 静态检查：后端 vet + 前端 ESLint + 移动端 ESLint
 lint:
 	cd backend && go vet ./...
+	cd frontend && npm run lint
+	cd mobile && npm run lint
 
 # 冒烟：构建 → 启动 → 登录 → 命中受保护路由 → 断言 → 清理
 smoke:

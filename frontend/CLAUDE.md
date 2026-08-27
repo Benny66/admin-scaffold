@@ -2,11 +2,13 @@
 
 AI 在 `frontend/`（Web 端）下编写 Vue3 代码时 MUST 遵守本文件。跨端通用规则见根 [`AGENTS.md`](../AGENTS.md)。
 
+> **护栏强制**：下列标注 ⚙️ 的规则已由根 `eslint.config.js` 编译成会失败的 ESLint 检查（`make lint`），违反即 CI 变红，而非靠人工 code review。
+
 ---
 
 ## 1. 命名与目录约定
 
-- 状态管理目录 MUST 统一为 `stores/`（禁止 `store/` 单复数混用）。
+- ⚙️ 状态管理目录 MUST 统一为 `stores/`（禁止 `store/` 单复数混用）—— 由 `no-restricted-imports` 强制。
 - 页面按业务域分目录：`views/<domain>/`，公共组件放 `components/`。
 - API 定义集中在 `api/index.js`，请求封装统一走 `utils/request.js`。
 - 路径别名 `@` 指向 `src/`。
@@ -23,7 +25,7 @@ AI 在 `frontend/`（Web 端）下编写 Vue3 代码时 MUST 遵守本文件。�
 - 所有 HTTP 请求 MUST 走 `utils/request.js` 的 axios 实例。
 - MUST 自动附带 `Authorization: Bearer <token>`。
 - 响应拦截器 MUST 统一处理：`code === 200` 返回 `res`；401 清 token 跳登录；403 提示无权限；blob 直接返回。
-- 禁止绕过封装直接 `import axios`。
+- ⚙️ 禁止绕过封装直接 `import axios` —— 由 `no-restricted-imports` 强制（`utils/request.js` 自身是唯一豁免）。
 
 ## 4. 权限控制
 
