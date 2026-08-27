@@ -78,7 +78,7 @@ func init() {
 	GlobalConfig = Config{
 		App: AppConfig{
 			Name:     "",
-			Subtitle: "企业管理系统",
+			Subtitle: "",
 			Footer:   "",
 		},
 		Server: ServerConfig{

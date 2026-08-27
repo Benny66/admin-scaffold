@@ -31,7 +31,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import { useAppStore } from '@/store/app'
+import { useAppStore } from '@/stores/app'
 import { changePassword } from '@/api'
 
 const router = useRouter()

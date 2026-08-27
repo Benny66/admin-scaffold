@@ -4,6 +4,7 @@ export const useAppStore = defineStore('app', {
   state: () => ({
     userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null'),
     permissions: JSON.parse(localStorage.getItem('permissions') || '[]'),
+    systemName: localStorage.getItem('systemName') || '',
   }),
   getters: {
     isLoggedIn: (state) => !!state.userInfo && !!localStorage.getItem('token'),
@@ -16,6 +17,10 @@ export const useAppStore = defineStore('app', {
     setPermissions(permissions) {
       this.permissions = permissions
       localStorage.setItem('permissions', JSON.stringify(permissions))
+    },
+    setSystemName(name) {
+      this.systemName = name
+      localStorage.setItem('systemName', name)
     },
     logout() {
       this.userInfo = null

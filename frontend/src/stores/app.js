@@ -5,7 +5,7 @@ export const useAppStore = defineStore('app', {
   state: () => ({
     userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null'),
     permissions: JSON.parse(localStorage.getItem('permissions') || '[]'),
-    systemName: localStorage.getItem('systemName') || '企业管理系统',
+    systemName: localStorage.getItem('systemName') || '',
   }),
   getters: {
     isLoggedIn: (state) => !!state.userInfo && !!localStorage.getItem('token'),
@@ -32,7 +32,7 @@ export const useAppStore = defineStore('app', {
       try {
         const res = await getSystemInfo()
         if (res.code === 200 && res.data) {
-          this.setSystemName(res.data.name || '企业管理系统')
+          this.setSystemName(res.data.name || 'Base Admin')
         }
       } catch (e) {
         // 静默失败，使用默认名称

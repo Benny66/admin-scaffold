@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: Base Admin Scaffold API
+  version: 1.0.0
+  description: |
+    Base 脚手架后端 API 契约 —— 字段名与响应形状的【唯一真相】。
+    前端 api/index.js 与后端 struct tag 应与此保持一致，杜绝三端漂移。
+    （统一响应 code 语义：200 成功 / 400 参数错误 / 401 未认证 / 403 无权限 / 404 不存在 / 500 内部错误）
+servers:
+  - url: http://localhost:8080/api
+
+# ==================== 通用组件（可复用 schema）====================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # 统一响应包装：所有接口返回此结构
+    Response:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 业务状态码（200/400/401/403/404/500）
+          example: 200
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          description: 业务数据（可为对象、数组或 null）
+
+    # 分页响应：分页接口的 data 固定为此结构
+    PageResult:
+      type: object
+      properties:
+        list:
+          type: array
+          items: {}
+        total:
+          type: integer
+          format: int64
+          example: 100
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 10
+
+    # 分页查询参数（page 从 1 开始，page_size 默认 10、上限 100）
+    PageQuery:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+        keyword:
+          type: string
+          description: 关键字模糊搜索
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    LoginData:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT 令牌
+        user:
+          $ref: '#/components/schemas/User'
+        permissions:
+          type: array
+          items:
+            type: string
+          description: 权限码列表
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        real_name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        status:
+          type: integer
+          description: 1 启用 0 禁用
+        is_admin:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        status:
+          type: integer
+        sort:
+          type: integer
+
+# ==================== 路径 ====================
+paths:
+  /auth/login:
+    post:
+      summary: 登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LoginData'
+
+  /auth/logout:
+    post:
+      summary: 退出登录
+      responses:
+        '200':
+          description: 退出成功
+
+  /auth/info:
+    get:
+      summary: 当前用户信息
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 用户信息与权限码
+
+  /users:
+    get:
+      summary: 用户列表（分页）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/schemas/PageQuery'
+      responses:
+        '200':
+          description: 分页结果
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageResult'
+    post:
+      summary: 创建用户
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 创建的用户
+
+  /roles:
+    get:
+      summary: 角色列表（分页）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/schemas/PageQuery'
+      responses:
+        '200':
+          description: 分页结果
+
+  /dict/types:
+    get:
+      summary: 字典类型列表（分页）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/schemas/PageQuery'
+      responses:
+        '200':
+          description: 分页结果
+
+  /logs/operation:
+    get:
+      summary: 操作日志列表（分页）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/schemas/PageQuery'
+      responses:
+        '200':
+          description: 分页结果
+
+  /system/info:
+    get:
+      summary: 系统信息（公开，无需鉴权）
+      security: []
+      responses:
+        '200':
+          description: 系统名称与副标题

@@ -1,12 +1,12 @@
 <template>
   <div class="home-page">
-    <van-nav-bar title="企业管理系统" />
+    <van-nav-bar :title="systemName" />
 
     <div class="welcome">
       <van-image round width="60" height="60" src="https://img.yzcdn.cn/vant/cat.jpeg" />
       <div class="welcome-text">
         <div class="name">{{ userInfo?.real_name || userInfo?.username || '未登录' }}</div>
-        <div class="desc">欢迎使用企业管理系统移动端</div>
+        <div class="desc">欢迎使用{{ systemName }}移动端</div>
       </div>
     </div>
 
@@ -19,10 +19,11 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useAppStore } from '@/store/app'
+import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()
 const userInfo = computed(() => appStore.userInfo)
+const systemName = computed(() => appStore.systemName || 'Base Admin')
 </script>
 
 <style scoped>

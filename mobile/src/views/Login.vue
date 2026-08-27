@@ -1,7 +1,7 @@
 <template>
   <div class="login-page">
     <div class="login-header">
-      <h1>企业管理系统</h1>
+      <h1>{{ systemName }}</h1>
       <p>移动端</p>
     </div>
     <van-form @submit="handleLogin">
@@ -33,15 +33,16 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { login } from '@/api'
-import { useAppStore } from '@/store/app'
+import { useAppStore } from '@/stores/app'
 
 const router = useRouter()
 const appStore = useAppStore()
 
+const systemName = computed(() => appStore.systemName || 'Base Admin')
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)
 

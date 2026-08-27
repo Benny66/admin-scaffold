@@ -2,8 +2,8 @@
 # 复制本文件为 config.yaml 并按需修改；未配置的字段使用代码内默认值。
 
 app:
-  name: ""            # 系统名称（留空使用前端标题）
-  subtitle: "企业管理系统"
+  name: ""            # 系统名称（留空使用代码默认值）
+  subtitle: ""
   footer: ""
 
 server:

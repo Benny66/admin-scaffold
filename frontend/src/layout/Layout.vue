@@ -3,8 +3,8 @@
     <!-- 侧边栏 -->
     <el-aside :width="isCollapse ? '64px' : '200px'" class="aside">
       <div class="logo">
-        <span v-if="!isCollapse">企业管理系统</span>
-        <span v-else>企</span>
+        <span v-if="!isCollapse">{{ systemName }}</span>
+        <span v-else>{{ (systemName || 'B').charAt(0) }}</span>
       </div>
       <el-menu
         :default-active="$route.path"
@@ -90,6 +90,7 @@ const appStore = useAppStore()
 
 const isCollapse = ref(false)
 const userInfo = computed(() => appStore.userInfo)
+const systemName = computed(() => appStore.systemName || 'Base Admin')
 
 const menus = [
   { path: '/system/user', title: '用户管理', icon: 'User' },

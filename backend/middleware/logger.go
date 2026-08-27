@@ -67,6 +67,12 @@ func OperationLogger() gin.HandlerFunc {
 			return
 		}
 
+		// 在进入 goroutine 前捕获所有 gin.Context 派生值，避免 handler 返回后
+		// Context 被复用导致的竞态（异步 goroutine 不得访问 gin.Context）。
+		clientIP := c.ClientIP()
+		userAgent := c.Request.UserAgent()
+		respCode := rw.statusCode
+
 		// 异步写入日志
 		go func() {
 			log := models.OperationLog{
@@ -74,14 +80,14 @@ func OperationLogger() gin.HandlerFunc {
 				Username:  uname,
 				Method:    method,
 				Path:      path,
-				IP:        c.ClientIP(),
-				UserAgent: c.Request.UserAgent(),
+				IP:        clientIP,
+				UserAgent: userAgent,
 				ReqBody:   string(reqBody),
-				RespCode:  rw.statusCode,
+				RespCode:  respCode,
 				Duration:  duration,
 				Status:    1,
 			}
-			if rw.statusCode >= 400 {
+			if respCode >= 400 {
 				log.Status = 0
 			}
 			database.DB.Create(&log)

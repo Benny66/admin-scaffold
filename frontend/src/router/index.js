@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '@/layout/Layout.vue'
+import { useAppStore } from '@/stores/app'
 
 const routes = [
   {
@@ -54,7 +55,10 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  document.title = (to.meta.title ? to.meta.title + ' - ' : '') + '企业管理系统'
+  // 系统名称优先取后端配置，路由守卫早于 store 初始化时用安全兜底
+  const appStore = useAppStore()
+  const systemName = appStore.systemName || '管理系统'
+  document.title = (to.meta.title ? to.meta.title + ' - ' : '') + systemName
   const token = localStorage.getItem('token')
   if (to.path === '/login') {
     // 已登录访问登录页则跳转首页

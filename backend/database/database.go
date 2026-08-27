@@ -65,6 +65,7 @@ func Init() {
 
 	// 自动迁移建表（系统管理五件套相关表）
 	err = DB.AutoMigrate(
+		// 【gen:migrate】
 		&models.User{},
 		&models.Role{},
 		&models.UserRole{},

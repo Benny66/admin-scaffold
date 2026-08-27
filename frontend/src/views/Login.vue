@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h2 class="login-title">企业管理系统</h2>
+      <h2 class="login-title">{{ systemName }}</h2>
       <p class="login-subtitle">系统管理基座</p>
       <el-form :model="form" @submit.prevent="handleLogin">
         <el-form-item>
@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
@@ -43,8 +43,13 @@ import { useAppStore } from '@/stores/app'
 const router = useRouter()
 const appStore = useAppStore()
 
+const systemName = computed(() => appStore.systemName || 'Base Admin')
 const form = ref({ username: '', password: '' })
 const loading = ref(false)
+
+onMounted(() => {
+  appStore.fetchSystemInfo()
+})
 
 async function handleLogin() {
   if (!form.value.username || !form.value.password) {

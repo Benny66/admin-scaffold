@@ -11,7 +11,10 @@ import (
 func GetSystemInfo(c *gin.Context) {
 	name := config.GlobalConfig.App.Name
 	if name == "" {
-		name = "企业管理系统"
+		name = config.GlobalConfig.App.Subtitle
+	}
+	if name == "" {
+		name = "Base Admin"
 	}
 	utils.Success(c, gin.H{
 		"name":     name,
