@@ -4,6 +4,11 @@ dist/
 dist-mobile/
 *.log
 
+# 打包部署产物
+deploy/
+*.tar.gz
+*.zip
+
 # 数据库文件
 *.db
 *.db-shm

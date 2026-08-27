@@ -25,6 +25,12 @@ gen:
 	fi
 	backend/scripts/gen-module.sh "$(name)"
 
+# 多平台打包（用法：make package           = 本地平台
+#              make package TARGET=--linux    = Linux amd64
+#              make package TARGET=--windows  = Windows amd64）
+package:
+	scripts/package.sh $(TARGET)
+
 # 构建后端
 build:
 	cd backend && go build ./...

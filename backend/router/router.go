@@ -95,4 +95,7 @@ func SetupRouter(r *gin.Engine) {
 	}
 
 	// 【gen:routes】
+
+	// 静态托管前端产物（dist/dist-mobile 存在时启用，SPA 回退）
+	setupStaticServing(r)
 }
