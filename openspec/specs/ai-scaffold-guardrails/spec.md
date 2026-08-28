@@ -5,7 +5,7 @@ TBD - created by archiving change ai-scaffold-maturity. Update Purpose after arc
 ## Requirements
 ### Requirement: 分层铁律由 guard 测试强制
 
-后端 MUST 提供 guard 测试，扫描源码以确保分层约束不可被 AI 静默违反：`services/` 不得导入 Gin，`controllers/` 不得直接操作 GORM。
+后端 MUST 提供 guard 测试，扫描源码以确保分层约束不可被 AI 静默违反：`services/` 不得导入 Gin，`controllers/` 不得直接操作 GORM（`gorm.io/gorm` 或本项目 `<module>/database` 包）。
 
 #### Scenario: AI 在 service 层引入了 gin 依赖
 
@@ -14,8 +14,13 @@ TBD - created by archiving change ai-scaffold-maturity. Update Purpose after arc
 
 #### Scenario: AI 在 controller 层直接操作 GORM
 
-- **WHEN** `controllers/` 下任一 Go 文件 `import "gorm.io/gorm"` 或直接引用 `database.DB`
+- **WHEN** `controllers/` 下任一 Go 文件 `import "gorm.io/gorm"` 或 `import "<当前模块名>/database"`
 - **THEN** 对应 guard 测试失败，阻断合并
+
+#### Scenario: 项目改名后护栏依然生效
+
+- **WHEN** 复制基座后把 `go.mod` 的 module 从 `base-backend` 改为其他模块名
+- **THEN** guard 测试从 `go.mod` 动态读取模块名，controller 直连 `<新模块名>/database` 仍被正确拦截，护栏不因改名而失效
 
 ### Requirement: 统一响应协议由 guard 测试强制
 

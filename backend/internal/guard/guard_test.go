@@ -57,6 +57,24 @@ func fileImports(f *ast.File) []string {
 	return imps
 }
 
+// readModuleName 从 backend/go.mod 首行 `module <name>` 读取模块名。
+// 使「模块名」成为 go.mod 这一处的单一真相，guard 不再硬编码 base-backend。
+func readModuleName(t *testing.T) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(backendRoot(), "go.mod"))
+	if err != nil {
+		t.Fatalf("读取 go.mod 失败: %v", err)
+	}
+	for _, raw := range strings.Split(string(data), "\n") {
+		line := strings.TrimSpace(raw)
+		if strings.HasPrefix(line, "module ") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "module "))
+		}
+	}
+	t.Fatal("go.mod 缺少 module 声明")
+	return ""
+}
+
 // containsJSONCall 判断 AST 中是否存在对 `c.JSON(` 的直接调用。
 // 用于禁止 controller 手写响应。
 func containsJSONCall(f *ast.File) bool {
@@ -186,13 +204,14 @@ func Test_ServiceLayerMustNotImportGin(t *testing.T) {
 // Test_ControllerLayerMustNotTouchGORM 分层铁律：controllers/ 不得直接操作 GORM。
 func Test_ControllerLayerMustNotTouchGORM(t *testing.T) {
 	dir := filepath.Join(backendRoot(), "controllers")
+	moduleName := readModuleName(t)
 	for path, f := range parseGoFiles(t, dir) {
 		for _, imp := range fileImports(f) {
 			if strings.Contains(imp, "gorm.io/gorm") {
 				t.Errorf("%s: controllers 层不得 import %q（控制器不直接操作 GORM）", path, imp)
 			}
-			if imp == "base-backend/database" {
-				t.Errorf("%s: controllers 层不得 import base-backend/database（数据库访问只允许在 service 层）", path)
+			if imp == moduleName+"/database" {
+				t.Errorf("%s: controllers 层不得 import %s/database（数据库访问只允许在 service 层）", path, moduleName)
 			}
 		}
 	}
