@@ -25,7 +25,7 @@ gen:
 	fi
 	backend/scripts/gen-module.sh "$(name)"
 
-# 一键初始化新项目（用法：make init name=<项目名> [module=...] [db_name=...] [issuer=...]）
+# 一键初始化新项目（用法：make init name=<项目名> [module=...] [db_name=...] [issuer=...] [app_name=...]）
 init:
 	@if [ -z "$(name)" ]; then \
 		echo "用法: make init name=<项目名>（如 make init name=my-system）"; \
@@ -34,7 +34,9 @@ init:
 	scripts/init.sh "$(name)" \
 		$$([ -n "$(module)" ] && echo --module "$(module)") \
 		$$([ -n "$(db_name)" ] && echo --db-name "$(db_name)") \
-		$$([ -n "$(issuer)" ] && echo --issuer "$(issuer)")
+		$$([ -n "$(issuer)" ] && echo --issuer "$(issuer)") \
+		$$([ -n "$(app_name)" ] && echo --app-name "$(app_name)") \
+		$$([ -n "$(port)" ] && echo --port "$(port)")
 
 # 多平台打包（用法：make package           = 本地平台
 #              make package TARGET=--linux    = Linux amd64

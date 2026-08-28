@@ -36,3 +36,4 @@ AI 在 `frontend/`（Web 端）下编写 Vue3 代码时 MUST 遵守本文件。�
 ## 5. 系统名称
 
 - 系统名称 MUST 来自 `appStore.systemName`（由 `/system/info` 拉取），禁止硬编码「企业管理系统」字符串。
+- `index.html` 的 `<title>` 是中性占位（`Base Admin`），运行时由 `fetchSystemInfo` + `document.title` 覆盖为真实品牌名。

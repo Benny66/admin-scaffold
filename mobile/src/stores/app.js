@@ -41,6 +41,8 @@ export const useAppStore = defineStore('app', {
           this.setSystemName(name || 'Base Admin')
           this.setLogo(logo || '')
           this.setFooter(footer || '')
+          // 运行时覆盖浏览器标签页标题（index.html 的 title 是中性占位）
+          document.title = this.systemName
         }
       } catch (e) {
         // 静默失败，使用默认值

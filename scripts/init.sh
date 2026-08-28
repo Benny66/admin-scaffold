@@ -7,12 +7,14 @@
 #
 #   用法：
 #     ./scripts/init.sh <项目名> [选项]
-#       （或 make init name=<项目名> [module=...] [db_name=...] [issuer=...]）
+#       （或 make init name=<项目名> [module=...] [db_name=...] [issuer=...] [app_name=...]）
 #
 #   选项：
 #     --module <go模块名>    Go 模块名（默认 = 项目名）
 #     --db-name <名>         数据库名（默认不改）
 #     --issuer <名>          JWT Issuer（默认 = 项目名）
+#     --app-name <系统名称>   中文品牌名，替换「企业管理系统」残留（默认不改）
+#     --port <端口>          后端端口，生成 frontend/.env 与 mobile/.env（默认不改）
 #     --yes                 跳过删除确认
 #
 #   前置：guard 已从 go.mod 动态读模块名（见 change guard-read-module-name），
@@ -25,12 +27,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 usage() {
-  echo "用法: $0 <项目名> [--module <go模块名>] [--db-name <名>] [--issuer <名>] [--yes]"
+  echo "用法: $0 <项目名> [--module <go模块名>] [--db-name <名>] [--issuer <名>] [--app-name <系统名称>] [--port <端口>] [--yes]"
   echo ""
   echo "  项目名     必填，用于二进制名 / 包名 / 环境变量前缀"
   echo "  --module   Go 模块名（默认 = 项目名）"
   echo "  --db-name  数据库名（默认不改）"
   echo "  --issuer   JWT Issuer（默认 = 项目名）"
+  echo "  --app-name 系统名称（中文品牌名，替换「企业管理系统」等残留，默认不改）"
+  echo "  --port     后端端口（生成 frontend/.env 与 mobile/.env，默认不改）"
   echo "  --yes      跳过删除确认"
   exit 1
 }
@@ -39,15 +43,19 @@ NAME=""
 MODULE=""
 DB_NAME=""
 ISSUER=""
+APP_NAME=""
+PORT=""
 YES=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --module)  MODULE="${2:-}"; shift 2 ;;
-    --db-name) DB_NAME="${2:-}"; shift 2 ;;
-    --issuer)  ISSUER="${2:-}"; shift 2 ;;
-    --yes|-y)  YES=1; shift ;;
-    -*)        echo "未知参数: $1" >&2; usage ;;
+    --module)   MODULE="${2:-}"; shift 2 ;;
+    --db-name)  DB_NAME="${2:-}"; shift 2 ;;
+    --issuer)   ISSUER="${2:-}"; shift 2 ;;
+    --app-name) APP_NAME="${2:-}"; shift 2 ;;
+    --port)     PORT="${2:-}"; shift 2 ;;
+    --yes|-y)   YES=1; shift ;;
+    -*)         echo "未知参数: $1" >&2; usage ;;
     *)
       if [[ -z "$NAME" ]]; then NAME="$1"; else echo "多余参数: $1" >&2; usage; fi
       shift
@@ -86,7 +94,7 @@ echo "    JWT Issuer:  $ISSUER"
 echo ""
 
 # ---------- 执行文本替换 ----------
-NAME="$NAME" MODULE="$MODULE" DB_NAME="$DB_NAME" ISSUER="$ISSUER" \
+NAME="$NAME" MODULE="$MODULE" DB_NAME="$DB_NAME" ISSUER="$ISSUER" APP_NAME="$APP_NAME" \
 ENV_PREFIX="$ENV_PREFIX" SECRET="$SECRET" SELF_PATH="$SCRIPT_DIR/init.sh" python3 <<'PY'
 import os, re
 
@@ -94,6 +102,7 @@ name = os.environ["NAME"]
 module = os.environ["MODULE"]
 db_name = os.environ["DB_NAME"]
 issuer = os.environ["ISSUER"]
+app_name = os.environ["APP_NAME"]
 env_prefix = os.environ["ENV_PREFIX"]
 secret = os.environ["SECRET"]
 self_path = os.path.realpath(os.environ["SELF_PATH"])
@@ -136,6 +145,11 @@ def transform(s):
         s = s.replace("base_backend", db_name)
     # 8) 剩余裸 base-backend（二进制名 / start 脚本）
     s = s.replace("base-backend", name)
+    # 9) 中文品牌名（可选）：只有显式传 --app-name 才替换，避免臆断。
+    #    只替换「企业管理系统」这一明确的中文品牌残留，不碰 Base Admin 中性占位
+    #    （中性占位由运行时 brand-config 覆盖，不在此改动）。
+    if app_name:
+        s = s.replace("企业管理系统", app_name)
     return s
 
 changed = []
@@ -171,6 +185,17 @@ fi
 
 rm -rf openspec/specs openspec/changes
 rm -f backend/*.db backend/*.db-shm backend/*.db-wal backend/config.yaml
+
+# ---------- 生成前端/移动端 .env（可选，传 --port 才生成） ----------
+if [[ -n "$PORT" ]]; then
+  for dir in frontend mobile; do
+    cat > "$dir/.env" <<EOF
+VITE_API_BASE=http://localhost:${PORT}
+EOF
+  done
+  echo ""
+  echo "==> 已生成 frontend/.env 与 mobile/.env（VITE_API_BASE=http://localhost:${PORT}）"
+fi
 
 # 重写 openspec/config.yaml：保留 schema，context 填成新项目
 cat > openspec/config.yaml <<EOF

@@ -115,13 +115,13 @@ npm run dev
 2. **一键初始化**：
 
    ```bash
-   make init name=my-system
-   # 或直接：./scripts/init.sh my-system
+   make init name=my-system app_name="我的系统"
+   # 或直接：./scripts/init.sh my-system --app-name "我的系统"
    ```
 
    这一步会自动完成：改 Go 模块名（含 `_example/` 模板 import）、改前端/移动端包名、改环境变量前缀、改打包产物名、重置 JWT 密钥、清空基座 OpenSpec 历史、删除运行时残留（`*.db` / `config.yaml`）。
 
-   可选参数：`module=<go模块名>`（默认=项目名）、`db_name=<数据库名>`、`issuer=<JWT签发者>`。
+   可选参数：`module=<go模块名>`（默认=项目名）、`db_name=<数据库名>`、`issuer=<JWT签发者>`、`app_name=<系统名称>`（替换「企业管理系统」中文品牌残留）、`port=<后端端口>`（生成 frontend/.env 与 mobile/.env）。
 
 3. **安装依赖并验证**：
 
