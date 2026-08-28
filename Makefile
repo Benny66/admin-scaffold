@@ -1,7 +1,7 @@
 # Base 脚手架统一入口：AI 只需记住 make <target>，无需记忆零散脚本路径。
 # 目标：test / lint / smoke / gen / build / dev
 
-.PHONY: test lint smoke gen build dev dev-backend dev-frontend
+.PHONY: test lint smoke gen init build dev dev-backend dev-frontend
 
 # 后端全部测试（含 internal/guard 架构护栏）
 test:
@@ -24,6 +24,17 @@ gen:
 		exit 1; \
 	fi
 	backend/scripts/gen-module.sh "$(name)"
+
+# 一键初始化新项目（用法：make init name=<项目名> [module=...] [db_name=...] [issuer=...]）
+init:
+	@if [ -z "$(name)" ]; then \
+		echo "用法: make init name=<项目名>（如 make init name=my-system）"; \
+		exit 1; \
+	fi
+	scripts/init.sh "$(name)" \
+		$$([ -n "$(module)" ] && echo --module "$(module)") \
+		$$([ -n "$(db_name)" ] && echo --db-name "$(db_name)") \
+		$$([ -n "$(issuer)" ] && echo --issuer "$(issuer)")
 
 # 多平台打包（用法：make package           = 本地平台
 #              make package TARGET=--linux    = Linux amd64

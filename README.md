@@ -111,15 +111,30 @@ npm run dev
 
 ## 如何基于基座新建项目
 
-1. **复制目录**：将整个 `base/` 复制为新项目目录，如 `my-system/`。
-2. **改名**：
-   - 后端：修改 `backend/go.mod` 的 module 名（当前 `base-backend`），并全局替换所有 `import "base-backend/..."` 为新模块名。
-   - 前端：修改 `frontend/package.json` 与 `mobile/package.json` 的 `name`。
-3. **清理初始化数据**：删除运行时生成的 `backend/*.db` 与 `backend/config.yaml`（基座默认不携带）。
-4. **配置**：按需修改 `backend/config.example.yaml` 为 `config.yaml`，设置端口、JWT 密钥、数据库类型。
-5. **开发**：在 `services/` + `controllers/` + `router/` 中按现有范式新增业务模块，前端在 `views/` 下新增页面。
+1. **复制目录**：将整个基座复制为新项目目录，如 `my-system/`。
+2. **一键初始化**：
 
-> 详细约定见 `docs/` 与 `AGENTS.md`。
+   ```bash
+   make init name=my-system
+   # 或直接：./scripts/init.sh my-system
+   ```
+
+   这一步会自动完成：改 Go 模块名（含 `_example/` 模板 import）、改前端/移动端包名、改环境变量前缀、改打包产物名、重置 JWT 密钥、清空基座 OpenSpec 历史、删除运行时残留（`*.db` / `config.yaml`）。
+
+   可选参数：`module=<go模块名>`（默认=项目名）、`db_name=<数据库名>`、`issuer=<JWT签发者>`。
+
+3. **安装依赖并验证**：
+
+   ```bash
+   cd backend && go mod tidy && go test ./... && cd ..
+   cd frontend && npm install && cd ..
+   ```
+
+4. **配置**：把 `backend/config.example.yaml` 复制为 `config.yaml`，设置端口、数据库类型（密钥已在初始化时重置）。
+
+5. **开发**：`make gen name=<模块名>` 生成新业务模块骨架，在 `services/` + `controllers/` 中填充业务逻辑。
+
+> 详细约定见 `docs/` 与 `AGENTS.md`。初始化脚本说明见 `scripts/init.sh` 头部注释。
 
 ---
 
