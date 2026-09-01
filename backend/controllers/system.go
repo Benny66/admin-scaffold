@@ -27,11 +27,13 @@ func GetSystemInfo(c *gin.Context) {
 	}
 
 	utils.Success(c, gin.H{
-		"name":     name,
-		"subtitle": app.Subtitle,
-		"logo":     logo,
-		"favicon":  favicon,
-		"footer":   app.Footer,
+		"name":            name,
+		"subtitle":        app.Subtitle,
+		"logo":            logo,
+		"favicon":         favicon,
+		"footer":          app.Footer,
+		"login_bg":        staticURL(app.LoginBg),
+		"login_bg_mobile": staticURL(app.LoginBgMobile),
 	})
 }
 

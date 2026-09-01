@@ -60,12 +60,14 @@ export default [
     },
   },
 
-  // 豁免：vite.config.js 是 Node 环境，__dirname 由 vite 注入，不算未定义
+  // 豁免：vite.config.js 运行在 Node 环境，不参与浏览器打包，
+  // 故 __dirname 与 process 都不是未定义变量（src/ 下仍视为未定义）。
   {
     files: ['**/vite.config.js'],
     languageOptions: {
       globals: {
         __dirname: 'readonly',
+        process: 'readonly',
       },
     },
   },

@@ -3,7 +3,13 @@
     <!-- 侧边栏 -->
     <el-aside :width="isCollapse ? '64px' : '200px'" class="aside">
       <div class="logo">
-        <img v-if="appStore.logo" :src="appStore.logo" class="logo-img" alt="logo" />
+        <img
+          v-if="appStore.logoAvailable"
+          :src="appStore.logo"
+          class="logo-img"
+          alt="logo"
+          @error="appStore.markLogoFailed()"
+        />
         <span v-else-if="!isCollapse">{{ systemName }}</span>
         <span v-else>{{ (systemName || 'B').charAt(0) }}</span>
       </div>
@@ -55,7 +61,7 @@
       <!-- 内容区 -->
       <el-main class="main">
         <router-view />
-        <div v-if="appStore.footer" class="app-footer">{{ appStore.footer }}</div>
+        <AppFooter />
       </el-main>
     </el-container>
 
@@ -86,6 +92,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAppStore } from '@/stores/app'
 import { changePassword } from '@/api'
+import AppFooter from '@/components/AppFooter.vue'
 
 const router = useRouter()
 const appStore = useAppStore()
@@ -207,13 +214,5 @@ onMounted(() => {
   background-color: #f5f7fa;
   padding: 16px;
   overflow: auto;
-}
-.app-footer {
-  margin-top: 24px;
-  padding-top: 16px;
-  text-align: center;
-  color: #999;
-  font-size: 13px;
-  border-top: 1px solid #e4e7ed;
 }
 </style>

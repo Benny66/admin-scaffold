@@ -5,7 +5,7 @@ TBD - created by archiving change brand-config. Update Purpose after archive.
 ## Requirements
 ### Requirement: 品牌配置由 config.yaml 驱动
 
-后端 MUST 在 `config.go` 的 `AppConfig` 中提供 `name`、`logo`、`favicon`、`footer` 四个字段，均支持默认值 + YAML 覆盖 + 环境变量（沿用既有三层配置范式），使品牌四要素均可通过 `config.yaml` 设置。
+后端 MUST 在 `config.go` 的 `AppConfig` 中提供 `name`、`logo`、`favicon`、`footer` 四个字段，均支持默认值 + YAML 覆盖，使品牌四要素均可通过 `config.yaml` 设置。品牌段不支持环境变量覆盖——三层配置范式（含环境变量）适用于 `server`、`database`、`jwt` 三段。
 
 #### Scenario: 用户设置 config.yaml 品牌字段
 

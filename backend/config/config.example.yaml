@@ -7,6 +7,9 @@ app:
   footer: ""          # 页脚文字（前端 Layout 底部显示，留空不显示）
   logo: "logo.png"    # 品牌 logo 文件名（放 backend/static/）
   favicon: ""         # 浏览器标签图标文件名（放 backend/static/，留空回退 logo）
+  login_bg: ""        # 桌面端登录页背景图文件名（放 backend/static/，留空回退渐变）
+  login_bg_mobile: "" # 移动端登录页背景图文件名（留空回退 login_bg，再空则回退渐变）
+                      # 建议尺寸：桌面左栏约 1:1（≥1000×1000），移动端约 1:2（≥750×1600）
 
 server:
   port: "8080"

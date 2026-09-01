@@ -7,7 +7,17 @@
     </van-nav-bar>
 
     <div class="welcome">
-      <van-image round width="60" height="60" src="https://img.yzcdn.cn/vant/cat.jpeg" />
+      <van-image
+        v-if="appStore.logoAvailable"
+        round
+        width="60"
+        height="60"
+        :src="appStore.logo"
+        @error="appStore.markLogoFailed()"
+      />
+      <div v-else class="avatar-fallback">
+        {{ (userInfo?.real_name || userInfo?.username || 'U').charAt(0) }}
+      </div>
       <div class="welcome-text">
         <div class="name">{{ userInfo?.real_name || userInfo?.username || '未登录' }}</div>
         <div class="desc">欢迎使用{{ systemName }}移动端</div>
@@ -44,6 +54,16 @@ onMounted(() => {
   padding: 24px 16px;
   background: #fff;
   margin-bottom: 16px;
+}
+.avatar-fallback {
+  width: 60px;
+  height: 60px;
+  line-height: 60px;
+  border-radius: 50%;
+  background: #1989fa;
+  color: #fff;
+  font-size: 24px;
+  text-align: center;
 }
 .welcome-text {
   margin-left: 16px;

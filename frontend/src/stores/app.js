@@ -6,12 +6,20 @@ export const useAppStore = defineStore('app', {
     userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null'),
     permissions: JSON.parse(localStorage.getItem('permissions') || '[]'),
     systemName: localStorage.getItem('systemName') || '',
+    subtitle: localStorage.getItem('subtitle') || '',
     logo: localStorage.getItem('logo') || '',
     footer: localStorage.getItem('footer') || '',
+    loginBg: localStorage.getItem('loginBg') || '',
+    loginBgMobile: localStorage.getItem('loginBgMobile') || '',
+    // logo 加载失败标记（如 config 配了但 backend/static 下文件不存在）。
+    // 刻意不持久化：补上文件后刷新即可恢复，无需清缓存。
+    logoFailed: false,
   }),
   getters: {
     isLoggedIn: (state) => !!state.userInfo && !!localStorage.getItem('token'),
     isAdmin: (state) => !!state.userInfo?.is_admin,
+    // 所有 logo 展示点共用同一个判断，避免每个组件各存一份失败状态
+    logoAvailable: (state) => !!state.logo && !state.logoFailed,
   },
   actions: {
     setUserInfo(userInfo) {
@@ -26,6 +34,10 @@ export const useAppStore = defineStore('app', {
       this.systemName = name
       localStorage.setItem('systemName', name)
     },
+    setSubtitle(subtitle) {
+      this.subtitle = subtitle
+      localStorage.setItem('subtitle', subtitle)
+    },
     setLogo(logo) {
       this.logo = logo
       localStorage.setItem('logo', logo)
@@ -33,6 +45,18 @@ export const useAppStore = defineStore('app', {
     setFooter(footer) {
       this.footer = footer
       localStorage.setItem('footer', footer)
+    },
+    setLoginBg(loginBg) {
+      this.loginBg = loginBg
+      localStorage.setItem('loginBg', loginBg)
+    },
+    setLoginBgMobile(loginBgMobile) {
+      this.loginBgMobile = loginBgMobile
+      localStorage.setItem('loginBgMobile', loginBgMobile)
+    },
+    // 任一展示点加载失败即标记，其余展示点随之回退到文字，不再产生破图
+    markLogoFailed() {
+      this.logoFailed = true
     },
     hasPermission(code) {
       if (this.isAdmin) return true
@@ -42,10 +66,13 @@ export const useAppStore = defineStore('app', {
       try {
         const res = await getSystemInfo()
         if (res.code === 200 && res.data) {
-          const { name, logo, favicon, footer } = res.data
+          const { name, subtitle, logo, favicon, footer, login_bg, login_bg_mobile } = res.data
           this.setSystemName(name || 'Base Admin')
+          this.setSubtitle(subtitle || '')
           this.setLogo(logo || '')
           this.setFooter(footer || '')
+          this.setLoginBg(login_bg || '')
+          this.setLoginBgMobile(login_bg_mobile || '')
           // 运行时动态设置浏览器标签图标（favicon 跟随 config，而非编译期写死）
           if (favicon) {
             let link = document.querySelector('link[rel="icon"]')

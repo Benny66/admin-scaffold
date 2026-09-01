@@ -21,11 +21,13 @@ type Config struct {
 
 // AppConfig 应用配置
 type AppConfig struct {
-	Name     string `yaml:"name"`     // 系统名称
-	Subtitle string `yaml:"subtitle"` // 系统副标题
-	Footer   string `yaml:"footer"`   // 页脚
-	Logo     string `yaml:"logo"`     // 品牌 logo 文件名（放 backend/static/）
-	Favicon  string `yaml:"favicon"`  // 浏览器标签图标文件名（放 backend/static/，缺省回退 logo）
+	Name          string `yaml:"name"`            // 系统名称
+	Subtitle      string `yaml:"subtitle"`        // 系统副标题
+	Footer        string `yaml:"footer"`          // 页脚
+	Logo          string `yaml:"logo"`            // 品牌 logo 文件名（放 backend/static/）
+	Favicon       string `yaml:"favicon"`         // 浏览器标签图标文件名（放 backend/static/，缺省回退 logo）
+	LoginBg       string `yaml:"login_bg"`        // 桌面端登录页背景图文件名（放 backend/static/，留空回退渐变）
+	LoginBgMobile string `yaml:"login_bg_mobile"` // 移动端登录页背景图文件名（留空回退 login_bg）
 }
 
 // ServerConfig 服务器配置
@@ -79,11 +81,13 @@ func init() {
 	// 先设置默认值
 	GlobalConfig = Config{
 		App: AppConfig{
-			Name:     "",
-			Subtitle: "",
-			Footer:   "",
-			Logo:     "logo.png",
-			Favicon:  "",
+			Name:          "",
+			Subtitle:      "",
+			Footer:        "",
+			Logo:          "logo.png",
+			Favicon:       "",
+			LoginBg:       "",
+			LoginBgMobile: "",
 		},
 		Server: ServerConfig{
 			Port: "8080",
@@ -151,11 +155,13 @@ func init() {
 // yamlFile YAML 配置文件结构（用于反序列化）
 type yamlFile struct {
 	App struct {
-		Name     string `yaml:"name"`
-		Subtitle string `yaml:"subtitle"`
-		Footer   string `yaml:"footer"`
-		Logo     string `yaml:"logo"`
-		Favicon  string `yaml:"favicon"`
+		Name          string `yaml:"name"`
+		Subtitle      string `yaml:"subtitle"`
+		Footer        string `yaml:"footer"`
+		Logo          string `yaml:"logo"`
+		Favicon       string `yaml:"favicon"`
+		LoginBg       string `yaml:"login_bg"`
+		LoginBgMobile string `yaml:"login_bg_mobile"`
 	} `yaml:"app"`
 	Server struct {
 		Port string `yaml:"port"`
@@ -220,6 +226,12 @@ func loadYAMLConfig() {
 	}
 	if yf.App.Favicon != "" {
 		GlobalConfig.App.Favicon = yf.App.Favicon
+	}
+	if yf.App.LoginBg != "" {
+		GlobalConfig.App.LoginBg = yf.App.LoginBg
+	}
+	if yf.App.LoginBgMobile != "" {
+		GlobalConfig.App.LoginBgMobile = yf.App.LoginBgMobile
 	}
 	if yf.Server.Port != "" {
 		GlobalConfig.Server.Port = yf.Server.Port

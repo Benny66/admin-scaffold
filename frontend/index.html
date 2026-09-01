@@ -2,7 +2,8 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
+    <!-- favicon 不在此硬编码：backend/static 下无 favicon.ico，写死会导致每次加载 404。
+         运行时由 fetchSystemInfo 依据 config.yaml 的 app.favicon 动态注入。 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Base Admin</title>
   </head>
