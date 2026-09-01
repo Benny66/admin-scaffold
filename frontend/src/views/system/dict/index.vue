@@ -14,7 +14,7 @@
 
     <el-card shadow="never">
       <div class="toolbar">
-        <el-button type="primary" @click="openCreate">新增字典类型</el-button>
+        <el-button v-permission="'dict:create'" type="primary" @click="openCreate">新增字典类型</el-button>
       </div>
 
       <el-table :data="list" v-loading="loading" border stripe @row-click="handleRowClick" highlight-current-row>
@@ -32,9 +32,9 @@
         </el-table-column>
         <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click.stop="openEdit(row)">编辑</el-button>
+            <el-button v-permission="'dict:edit'" size="small" @click.stop="openEdit(row)">编辑</el-button>
             <el-button size="small" type="primary" @click.stop="openItems(row)">字典项</el-button>
-            <el-button size="small" type="danger" @click.stop="handleDelete(row)">删除</el-button>
+            <el-button v-permission="'dict:delete'" size="small" type="danger" @click.stop="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -74,7 +74,7 @@
     <!-- 字典项弹窗 -->
     <el-dialog v-model="itemsVisible" :title="`字典项 - ${currentType?.name || ''}`" width="620px">
       <div class="toolbar">
-        <el-button type="primary" size="small" @click="openItemCreate">新增字典项</el-button>
+        <el-button v-permission="'dict:create'" type="primary" size="small" @click="openItemCreate">新增字典项</el-button>
       </div>
       <el-table :data="items" v-loading="itemsLoading" border stripe>
         <el-table-column prop="label" label="标签" width="140" />
@@ -90,8 +90,8 @@
         <el-table-column prop="remark" label="备注" />
         <el-table-column label="操作" width="140">
           <template #default="{ row }">
-            <el-button size="small" @click="openItemEdit(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleItemDelete(row)">删除</el-button>
+            <el-button v-permission="'dict:edit'" size="small" @click="openItemEdit(row)">编辑</el-button>
+            <el-button v-permission="'dict:delete'" size="small" type="danger" @click="handleItemDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

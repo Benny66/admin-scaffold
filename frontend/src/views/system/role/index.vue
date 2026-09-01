@@ -14,7 +14,7 @@
 
     <el-card shadow="never">
       <div class="toolbar">
-        <el-button type="primary" @click="openCreate">新增角色</el-button>
+        <el-button v-permission="'roles:create'" type="primary" @click="openCreate">新增角色</el-button>
       </div>
 
       <el-table :data="list" v-loading="loading" border stripe>
@@ -32,9 +32,9 @@
         </el-table-column>
         <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button size="small" type="primary" @click="openAssign(row)">分配权限</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button v-permission="'roles:edit'" size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button v-permission="'roles:edit'" size="small" type="primary" @click="openAssign(row)">分配权限</el-button>
+            <el-button v-permission="'roles:delete'" size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

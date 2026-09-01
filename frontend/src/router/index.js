@@ -18,33 +18,45 @@ const routes = [
         path: 'system/user',
         name: 'SystemUser',
         component: () => import('@/views/system/user/index.vue'),
-        meta: { title: '用户管理', icon: 'User' },
+        meta: { title: '用户管理', icon: 'User', permission: 'users:view' },
       },
       {
         path: 'system/role',
         name: 'SystemRole',
         component: () => import('@/views/system/role/index.vue'),
-        meta: { title: '角色管理', icon: 'UserFilled' },
+        meta: { title: '角色管理', icon: 'UserFilled', permission: 'roles:view' },
       },
       {
         path: 'system/permission',
         name: 'SystemPermission',
         component: () => import('@/views/system/permission/index.vue'),
-        meta: { title: '权限管理', icon: 'Key' },
+        meta: { title: '权限管理', icon: 'Key', permission: 'permissions:view' },
       },
       {
         path: 'system/dict',
         name: 'SystemDict',
         component: () => import('@/views/system/dict/index.vue'),
-        meta: { title: '字典管理', icon: 'Collection' },
+        meta: { title: '字典管理', icon: 'Collection', permission: 'dict:view' },
       },
       {
         path: 'system/log',
         name: 'SystemLog',
         component: () => import('@/views/system/log/index.vue'),
-        meta: { title: '操作日志', icon: 'Document' },
+        meta: { title: '操作日志', icon: 'Document', permission: 'logs:view' },
       },
     ],
+  },
+  {
+    path: '/403',
+    name: 'Forbidden',
+    component: () => import('@/views/ErrorPage.vue'),
+    meta: { title: '无权限', code: 403 },
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/ErrorPage.vue'),
+    meta: { title: '页面不存在', code: 404 },
   },
 ]
 
@@ -60,20 +72,32 @@ router.beforeEach((to, from, next) => {
   const systemName = appStore.systemName || '管理系统'
   document.title = (to.meta.title ? to.meta.title + ' - ' : '') + systemName
   const token = localStorage.getItem('token')
-  if (to.path === '/login') {
-    // 已登录访问登录页则跳转首页
-    if (token) {
+
+  // 白名单：登录页与错误页无条件放行。必须放在权限判断之前，
+  // 否则 /403 页面本身会因「无权限」再次被重定向到 /403，形成死循环（见 design D5）。
+  if (to.path === '/login' || to.path === '/403') {
+    if (to.path === '/login' && token) {
       next('/')
     } else {
       next()
     }
-  } else {
-    if (!token) {
-      next('/login')
-    } else {
-      next()
-    }
+    return
   }
+
+  // 未登录访问受保护路由 → 登录页
+  if (!token) {
+    next('/login')
+    return
+  }
+
+  // 已登录访问声明了权限码的路由 → 无权限则进 403
+  const required = to.meta && to.meta.permission
+  if (required && !appStore.hasPermission(required)) {
+    next('/403')
+    return
+  }
+
+  next()
 })
 
 export default router

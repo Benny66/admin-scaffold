@@ -15,7 +15,7 @@
 
     <el-card shadow="never">
       <div class="toolbar">
-        <el-button type="primary" @click="openCreate">新增用户</el-button>
+        <el-button v-permission="'users:create'" type="primary" @click="openCreate">新增用户</el-button>
       </div>
 
       <el-table :data="list" v-loading="loading" border stripe>
@@ -40,12 +40,12 @@
         </el-table-column>
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button size="small" type="warning" @click="handleResetPassword(row)">重置密码</el-button>
-            <el-button size="small" :type="row.status === 1 ? 'danger' : 'success'" @click="handleToggleStatus(row)">
+            <el-button v-permission="'users:edit'" size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button v-permission="'users:edit'" size="small" type="warning" @click="handleResetPassword(row)">重置密码</el-button>
+            <el-button v-permission="'users:edit'" size="small" :type="row.status === 1 ? 'danger' : 'success'" @click="handleToggleStatus(row)">
               {{ row.status === 1 ? '禁用' : '启用' }}
             </el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button v-permission="'users:delete'" size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

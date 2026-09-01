@@ -31,6 +31,9 @@ MUST NOT 提交：`*.db`、`*.exe`、`dist/`、`node_modules/`、`*.orig`、`*.r
 - 优先使用 `make gen name=<模块名>` 从范例生成骨架，再填充 `// TODO: 业务逻辑` 锚点。
 - 详细导航见 [`docs/map.md`](docs/map.md)。
 
+> 与 README 的分工：README 讲「基座有哪些能力」，本文件讲「新增代码照着谁写」。
+> 「系统管理五件套」是可运行的能力实现（开箱即用），但不是代码范例——范例唯一指向 `backend/_example/`。
+
 ## 5. 验证入口
 
 - 改完代码 MUST 跑 `make test`（含架构护栏 guard 测试）与 `make smoke`（冒烟），不得只 `go build`。

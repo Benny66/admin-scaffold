@@ -192,4 +192,20 @@ func initBaseData() {
 			}
 		}
 	}
+
+	// 为「普通用户」角色分配只读权限（5 个 :view），使 RBAC 可开箱演示权限差异。
+	// 否则非管理员用户登录后 permissions 为空，前端菜单会被过滤得一干二净（见 design D9）。
+	var userRole models.Role
+	DB.Where("code = ?", "user").First(&userRole)
+	if userRole.ID > 0 {
+		var userPermCount int64
+		DB.Model(&models.RolePermission{}).Where("role_id = ?", userRole.ID).Count(&userPermCount)
+		if userPermCount == 0 {
+			var viewPermissions []models.Permission
+			DB.Where("code LIKE ?", "%:view").Find(&viewPermissions)
+			for _, perm := range viewPermissions {
+				DB.Create(&models.RolePermission{RoleID: userRole.ID, PermissionID: perm.ID})
+			}
+		}
+	}
 }

@@ -27,6 +27,13 @@
           <template #title>{{ item.title }}</template>
         </el-menu-item>
       </el-menu>
+      <!-- 零可见菜单时的空态兜底，避免侧边栏一片空白（见 design D9） -->
+      <el-empty
+        v-if="menus.length === 0"
+        :image-size="60"
+        description="暂无可见菜单"
+        class="menu-empty"
+      />
     </el-aside>
 
     <el-container>
@@ -101,13 +108,22 @@ const isCollapse = ref(false)
 const userInfo = computed(() => appStore.userInfo)
 const systemName = computed(() => appStore.systemName || 'Base Admin')
 
-const menus = [
-  { path: '/system/user', title: '用户管理', icon: 'User' },
-  { path: '/system/role', title: '角色管理', icon: 'UserFilled' },
-  { path: '/system/permission', title: '权限管理', icon: 'Key' },
-  { path: '/system/dict', title: '字典管理', icon: 'Collection' },
-  { path: '/system/log', title: '操作日志', icon: 'Document' },
-]
+// 菜单从路由声明派生（单一数据源），并按 meta.permission 过滤（见 design D1/D2/D3）。
+// 新增业务模块只需在 router/index.js 注册一条带 meta.permission 的路由，菜单自动出现。
+const menus = computed(() => {
+  const root = router.options.routes.find((r) => r.path === '/')
+  const children = (root && root.children) || []
+  return children
+    .filter((item) => {
+      const code = item.meta && item.meta.permission
+      return !code || appStore.hasPermission(code)
+    })
+    .map((item) => ({
+      path: '/' + (item.path || '').replace(/^\//, ''),
+      title: item.meta && item.meta.title,
+      icon: item.meta && item.meta.icon,
+    }))
+})
 
 const passwordDialog = ref(false)
 const passwordForm = ref({
@@ -182,6 +198,9 @@ onMounted(() => {
 }
 .menu {
   border-right: none;
+}
+.menu-empty {
+  padding: 24px 0;
 }
 .header {
   background-color: #fff;

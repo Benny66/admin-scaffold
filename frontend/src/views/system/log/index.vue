@@ -19,7 +19,7 @@
       </el-tabs>
 
       <div class="toolbar">
-        <el-button v-if="activeTab === 'operation'" type="danger" @click="handleClear">清空操作日志</el-button>
+        <el-button v-if="activeTab === 'operation' && appStore.isAdmin" type="danger" @click="handleClear">清空操作日志</el-button>
       </div>
 
       <!-- 操作日志 -->
@@ -76,7 +76,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getOperationLogList, getLoginLogList, clearOperationLog } from '@/api'
+import { useAppStore } from '@/stores/app'
 
+const appStore = useAppStore()
 const activeTab = ref('operation')
 const list = ref([])
 const total = ref(0)
