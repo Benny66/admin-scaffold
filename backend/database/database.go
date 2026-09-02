@@ -128,36 +128,35 @@ func initBaseData() {
 		}
 	}
 
-	// 创建默认权限（仅系统管理相关）
-	var permCount int64
-	DB.Model(&models.Permission{}).Count(&permCount)
-	if permCount == 0 {
-		permissions := []models.Permission{
-			// 用户管理权限
-			{Name: "查看用户", Code: "users:view", Type: "api", Sort: 1, Status: 1},
-			{Name: "创建用户", Code: "users:create", Type: "api", Sort: 2, Status: 1},
-			{Name: "编辑用户", Code: "users:edit", Type: "api", Sort: 3, Status: 1},
-			{Name: "删除用户", Code: "users:delete", Type: "api", Sort: 4, Status: 1},
-			// 角色管理权限
-			{Name: "查看角色", Code: "roles:view", Type: "api", Sort: 5, Status: 1},
-			{Name: "创建角色", Code: "roles:create", Type: "api", Sort: 6, Status: 1},
-			{Name: "编辑角色", Code: "roles:edit", Type: "api", Sort: 7, Status: 1},
-			{Name: "删除角色", Code: "roles:delete", Type: "api", Sort: 8, Status: 1},
-			// 权限管理权限
-			{Name: "查看权限", Code: "permissions:view", Type: "api", Sort: 9, Status: 1},
-			{Name: "创建权限", Code: "permissions:create", Type: "api", Sort: 10, Status: 1},
-			{Name: "编辑权限", Code: "permissions:edit", Type: "api", Sort: 11, Status: 1},
-			{Name: "删除权限", Code: "permissions:delete", Type: "api", Sort: 12, Status: 1},
-			// 字典权限
-			{Name: "查看字典", Code: "dict:view", Type: "api", Sort: 13, Status: 1},
-			{Name: "创建字典", Code: "dict:create", Type: "api", Sort: 14, Status: 1},
-			{Name: "编辑字典", Code: "dict:edit", Type: "api", Sort: 15, Status: 1},
-			{Name: "删除字典", Code: "dict:delete", Type: "api", Sort: 16, Status: 1},
-			// 日志权限
-			{Name: "查看日志", Code: "logs:view", Type: "api", Sort: 17, Status: 1},
-		}
-		DB.Create(&permissions)
+	// 创建默认权限（系统管理相关 + 各业务模块）
+	// 下方权限声明块内的锚点是 make gen 注入新模块权限码的位置，同时也是 guard
+	// 「权限码必须注册进 initBaseData」的提取范围起点，不要删除或改名。
+	permissions := []models.Permission{
+		// 【gen:permissions】
+		// 用户管理权限
+		{Name: "查看用户", Code: "users:view", Type: "api", Sort: 1, Status: 1},
+		{Name: "创建用户", Code: "users:create", Type: "api", Sort: 2, Status: 1},
+		{Name: "编辑用户", Code: "users:edit", Type: "api", Sort: 3, Status: 1},
+		{Name: "删除用户", Code: "users:delete", Type: "api", Sort: 4, Status: 1},
+		// 角色管理权限
+		{Name: "查看角色", Code: "roles:view", Type: "api", Sort: 5, Status: 1},
+		{Name: "创建角色", Code: "roles:create", Type: "api", Sort: 6, Status: 1},
+		{Name: "编辑角色", Code: "roles:edit", Type: "api", Sort: 7, Status: 1},
+		{Name: "删除角色", Code: "roles:delete", Type: "api", Sort: 8, Status: 1},
+		// 权限管理权限
+		{Name: "查看权限", Code: "permissions:view", Type: "api", Sort: 9, Status: 1},
+		{Name: "创建权限", Code: "permissions:create", Type: "api", Sort: 10, Status: 1},
+		{Name: "编辑权限", Code: "permissions:edit", Type: "api", Sort: 11, Status: 1},
+		{Name: "删除权限", Code: "permissions:delete", Type: "api", Sort: 12, Status: 1},
+		// 字典权限
+		{Name: "查看字典", Code: "dict:view", Type: "api", Sort: 13, Status: 1},
+		{Name: "创建字典", Code: "dict:create", Type: "api", Sort: 14, Status: 1},
+		{Name: "编辑字典", Code: "dict:edit", Type: "api", Sort: 15, Status: 1},
+		{Name: "删除字典", Code: "dict:delete", Type: "api", Sort: 16, Status: 1},
+		// 日志权限
+		{Name: "查看日志", Code: "logs:view", Type: "api", Sort: 17, Status: 1},
 	}
+	syncPermissions(permissions)
 
 	// 创建默认字典类型（通用示例，非业务绑定）
 	var dictCount int64
@@ -178,34 +177,64 @@ func initBaseData() {
 		DB.Create(&dictItems)
 	}
 
-	// 为超级管理员角色分配所有权限
+	// 为超级管理员角色分配所有权限（幂等：新增权限码自动纳入，使权限管理界面完整可见）
 	var adminRole models.Role
 	DB.Where("code = ?", "admin").First(&adminRole)
 	if adminRole.ID > 0 {
-		var rolePermCount int64
-		DB.Model(&models.RolePermission{}).Where("role_id = ?", adminRole.ID).Count(&rolePermCount)
-		if rolePermCount == 0 {
-			var permissions []models.Permission
-			DB.Find(&permissions)
-			for _, perm := range permissions {
-				DB.Create(&models.RolePermission{RoleID: adminRole.ID, PermissionID: perm.ID})
-			}
-		}
+		var permissions []models.Permission
+		DB.Find(&permissions)
+		syncRolePermissions(adminRole.ID, permissions)
 	}
 
-	// 为「普通用户」角色分配只读权限（5 个 :view），使 RBAC 可开箱演示权限差异。
+	// 为「普通用户」角色分配只读权限（所有 :view），使 RBAC 可开箱演示权限差异。
 	// 否则非管理员用户登录后 permissions 为空，前端菜单会被过滤得一干二净（见 design D9）。
 	var userRole models.Role
 	DB.Where("code = ?", "user").First(&userRole)
 	if userRole.ID > 0 {
-		var userPermCount int64
-		DB.Model(&models.RolePermission{}).Where("role_id = ?", userRole.ID).Count(&userPermCount)
-		if userPermCount == 0 {
-			var viewPermissions []models.Permission
-			DB.Where("code LIKE ?", "%:view").Find(&viewPermissions)
-			for _, perm := range viewPermissions {
-				DB.Create(&models.RolePermission{RoleID: userRole.ID, PermissionID: perm.ID})
-			}
+		var viewPermissions []models.Permission
+		DB.Where("code LIKE ?", "%:view").Find(&viewPermissions)
+		syncRolePermissions(userRole.ID, viewPermissions)
+	}
+}
+
+// syncPermissions 按 code 幂等写入权限：已存在则跳过（不覆盖既有记录），不存在则创建。
+//
+// 刻意不使用「整批 Count()==0 才写入」的守卫——否则新增权限码对已有数据库永远不生效，
+// 这正是「新模块生成后非管理员用户 403」的放大器。Sort 按当前表内最大值递增，
+// 故声明里的 Sort 仅决定空库首次初始化的顺序，不会与存量排序值冲突。
+func syncPermissions(permissions []models.Permission) {
+	var maxSort int
+	row := DB.Model(&models.Permission{}).Select("COALESCE(MAX(sort), 0)").Row()
+	if err := row.Scan(&maxSort); err != nil {
+		log.Printf("读取权限最大排序值失败，从 1 开始: %v", err)
+		maxSort = 0
+	}
+
+	for _, perm := range permissions {
+		var existing models.Permission
+		if err := DB.Where("code = ?", perm.Code).First(&existing).Error; err == nil {
+			continue
+		}
+		maxSort++
+		perm.Sort = maxSort
+		if err := DB.Create(&perm).Error; err != nil {
+			log.Printf("初始化权限失败 %s: %v", perm.Code, err)
+		}
+	}
+}
+
+// syncRolePermissions 按 (role_id, permission_id) 幂等写入角色权限关联。
+// 与 syncPermissions 配套：仅有 permissions 记录而缺关联，新权限码依然不生效。
+func syncRolePermissions(roleID uint, permissions []models.Permission) {
+	for _, perm := range permissions {
+		var count int64
+		DB.Model(&models.RolePermission{}).
+			Where("role_id = ? AND permission_id = ?", roleID, perm.ID).Count(&count)
+		if count > 0 {
+			continue
+		}
+		if err := DB.Create(&models.RolePermission{RoleID: roleID, PermissionID: perm.ID}).Error; err != nil {
+			log.Printf("分配角色权限失败 role=%d perm=%s: %v", roleID, perm.Code, err)
 		}
 	}
 }

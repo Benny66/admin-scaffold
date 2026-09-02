@@ -41,7 +41,14 @@ HTTP → router → middleware(JWT/RBAC/日志) → controller → service → m
 
 - 受保护路由 MUST 按权限码挂 `middleware.PermissionRequired("<资源>:<动作>")`。
 - 仅超管接口挂 `middleware.AdminRequired()`。
-- 新增模块后，MUST 在 `database/database.go` 的 `initBaseData` 中为 `<资源>:view/create/edit/delete` 新增 Permission 记录。
+- 权限码的资源名用**复数**（`assets:view`），命名规则见 [`docs/map.md`](../docs/map.md) 的「新模块命名约定」。
+- 新增模块时，权限码由 `make gen` **自动注册**进 `database/database.go` 的 `initBaseData`
+  权限声明块（`【gen:permissions】` 锚点内），无需手工补。
+- 手工新增受保护路由时，MUST 同步在 `initBaseData` 的权限声明块注册该权限码，否则 guard 测试
+  `Test_PermissionCodesRegisteredInBaseData` 会失败。漏注册的后果：非管理员用户请求该接口返回
+  403，且权限管理界面看不到该码，管理员无法在界面上授权自救。
+- `initBaseData` 的权限初始化按 `code` 幂等补齐（已存在则跳过，不覆盖），故新增权限码对已有
+  数据库同样生效，无需删库重建。`Sort` 在运行时按当前最大值递增计算，MUST NOT 在声明里写死。
 
 ## 4. 命名规范
 

@@ -7,14 +7,30 @@ AI 定位代码时**先读本文件**，不要用 `find` 盲扫。这是「上�
 - **范例**：新增业务模块只看 `backend/_example/`（黄金路径唯一范例）。
 - **历史模块**：`views/system/` 五件套与 `backend/` 下对应的 system 模块是**历史代码，已互相漂移，禁止作为模仿对象**。
 
+## 新模块命名约定
+
+`make gen name=asset` 时模块名是单数，但**路由路径与权限码前缀统一用复数**：
+
+| 位置 | 形态 | 示例 |
+|---|---|---|
+| 模块名 / 前端目录 | 单数 | `asset`、`views/asset/index.vue` |
+| 后端路由路径 | 复数 | `/assets` |
+| 前端路由 path | 复数 | `assets` |
+| 权限码前缀 | 复数 | `assets:view` / `assets:create` / `assets:edit` / `assets:delete` |
+| Go 标识符 | PascalCase | `Asset`、`GetAssetList` |
+
+复数规则由 `backend/scripts/pluralize.sh` 统一产出（s/x/z/ch/sh → +es，辅音+y → ies，其余 +s）。
+它是生成器与 guard 测试的共同单一真相，**不要在别处另写一套规则**。
+
 ## 后端（backend/）
 
 | 我要做 | 去这里 | 关键说明 |
 |---|---|---|
-| 新增一个业务模块 | `make gen name=<模块名>` | 从 `_example/` 生成三层骨架 |
+| 新增一个业务模块 | `make gen name=<模块名>` | 从 `_example/` 生成三层骨架，并自动注入路由、AutoMigrate、权限码、前端页面/API/路由 |
 | 理解分层范式 | `backend/_example/{models,services,controllers}/` | 唯一标准答案 |
-| 加一条路由 | `backend/router/router.go` | 受保护路由挂 `PermissionRequired` |
-| 建表/迁移 | `backend/database/database.go` | `AutoMigrate` + `initBaseData` |
+| 加一条路由 | `backend/router/router.go` | 受保护路由挂 `PermissionRequired`，其权限码 MUST 已在 `initBaseData` 注册（有护栏） |
+| 建表/迁移 | `backend/database/database.go` | `AutoMigrate` + `initBaseData`（权限按 code 幂等补齐） |
+| 复数化规则 | `backend/scripts/pluralize.sh` | 路由路径与权限码前缀的单一真相 |
 | 鉴权中间件 | `backend/middleware/{jwt,permission,logger}.go` | JWT / RBAC / 操作日志 |
 | 统一响应 | `backend/utils/response.go` | `Success`/`Fail`/`SuccessPage` 等 |
 | 架构护栏 | `backend/internal/guard/guard_test.go` | 分层铁律等约束的静态检查 |
@@ -25,7 +41,7 @@ AI 定位代码时**先读本文件**，不要用 `find` 盲扫。这是「上�
 |---|---|---|
 | 新增页面 | `views/<domain>/index.vue` | `make gen` 会自动生成 |
 | 加接口定义 | `api/index.js` | 按模块分组追加 |
-| 加路由/菜单 | `router/index.js` + `layout/Layout.vue` 的 `menus` | 两处都要改 |
+| 加路由/菜单 | `router/index.js` | 菜单由 `Layout.vue` 从路由派生，改这一处即可；**禁止**改 `Layout.vue`（有护栏） |
 | 状态管理 | `stores/app.js` | 统一 `stores/` |
 | 请求封装 | `utils/request.js` | 拦截器统一处理 401/403 |
 

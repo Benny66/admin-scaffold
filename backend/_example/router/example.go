@@ -6,9 +6,9 @@
 //
 //   exampleGroup := protected.Group("/examples")
 //   {
-//       exampleGroup.GET("", middleware.PermissionRequired("example:view"), controllers.GetExampleList)
-//       exampleGroup.GET("/:id", middleware.PermissionRequired("example:view"), controllers.GetExample)
-//       exampleGroup.POST("", middleware.PermissionRequired("example:create"), controllers.CreateExample)
-//       exampleGroup.PUT("/:id", middleware.PermissionRequired("example:edit"), controllers.UpdateExample)
-//       exampleGroup.DELETE("/:id", middleware.PermissionRequired("example:delete"), controllers.DeleteExample)
+//       exampleGroup.GET("", middleware.PermissionRequired("examples:view"), controllers.GetExampleList)
+//       exampleGroup.GET("/:id", middleware.PermissionRequired("examples:view"), controllers.GetExample)
+//       exampleGroup.POST("", middleware.PermissionRequired("examples:create"), controllers.CreateExample)
+//       exampleGroup.PUT("/:id", middleware.PermissionRequired("examples:edit"), controllers.UpdateExample)
+//       exampleGroup.DELETE("/:id", middleware.PermissionRequired("examples:delete"), controllers.DeleteExample)
 //   }

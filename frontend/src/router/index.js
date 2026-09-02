@@ -44,6 +44,7 @@ const routes = [
         component: () => import('@/views/system/log/index.vue'),
         meta: { title: '操作日志', icon: 'Document', permission: 'logs:view' },
       },
+      // 【gen:route】
     ],
   },
   {
