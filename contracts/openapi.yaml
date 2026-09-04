@@ -219,6 +219,55 @@ paths:
         '200':
           description: 分页结果
 
+  /dict/types/export:
+    get:
+      summary: 全量导出全部字典类型（多 sheet，每类型一个 sheet）
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 下载 xlsx 文件
+
+  /dict/types/{id}/items/export:
+    get:
+      summary: 单类型字典项导出 / 下载导入模板（xlsx）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 下载 xlsx 文件
+
+  /dict/types/{id}/items/import:
+    post:
+      summary: 上传 xlsx 并按 value 覆盖合并导入字典项
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: 返回新增/更新统计 {new, updated}
+
   /logs/operation:
     get:
       summary: 操作日志列表（分页）

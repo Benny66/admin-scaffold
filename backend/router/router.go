@@ -84,7 +84,11 @@ func SetupRouter(r *gin.Engine) {
 	dictGroup := protected.Group("/dict")
 	{
 		dictGroup.GET("/types", middleware.PermissionRequired("dict:view"), controllers.GetDictTypeList)
+		// 全量导出：静态段 /types/export 需先于 /types/:id 注册，避免被参数路由抢占
+		dictGroup.GET("/types/export", middleware.PermissionRequired("dict:view"), controllers.ExportAllDictTypes)
 		dictGroup.GET("/types/:id", middleware.PermissionRequired("dict:view"), controllers.GetDictType)
+		dictGroup.GET("/types/:id/items/export", middleware.PermissionRequired("dict:view"), controllers.ExportDictItems)
+		dictGroup.POST("/types/:id/items/import", middleware.PermissionRequired("dict:create"), controllers.ImportDictItems)
 		dictGroup.POST("/types", middleware.PermissionRequired("dict:create"), controllers.CreateDictType)
 		dictGroup.PUT("/types/:id", middleware.PermissionRequired("dict:edit"), controllers.UpdateDictType)
 		dictGroup.DELETE("/types/:id", middleware.PermissionRequired("dict:delete"), controllers.DeleteDictType)

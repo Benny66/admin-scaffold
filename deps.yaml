@@ -27,6 +27,8 @@ backend:
     reason: bcrypt 密码哈希
   - package: gopkg.in/yaml.v3
     reason: 解析 config.yaml 与 deps.yaml
+  - package: github.com/xuri/excelize/v2
+    reason: 字典项 Excel 导入导出（通用可复用依赖）
 
 frontend:
   - package: vue

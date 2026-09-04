@@ -46,6 +46,12 @@ export const createDictItem = (data) => request.post('/dict/items', data)
 export const updateDictItem = (id, data) => request.put(`/dict/items/${id}`, data)
 export const deleteDictItem = (id) => request.delete(`/dict/items/${id}`)
 export const getDictItemsByCode = (code) => request.get(`/dict/code/${code}`)
+// 单类型导出 / 下载导入模板（响应为 blob 文件）
+export const exportDictItems = (id, params) => request.get(`/dict/types/${id}/items/export`, { params, responseType: 'blob' })
+// 全量导出（多 sheet，响应为 blob 文件）
+export const exportAllDictTypes = (params) => request.get('/dict/types/export', { params, responseType: 'blob' })
+// 上传 xlsx 按 value 覆盖合并导入
+export const importDictItems = (id, formData) => request.post(`/dict/types/${id}/items/import`, formData)
 
 // ==================== 日志管理 ====================
 export const getOperationLogList = (params) => request.get('/logs/operation', { params })

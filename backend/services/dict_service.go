@@ -4,6 +4,7 @@ import (
 	"base-backend/database"
 	"base-backend/models"
 	"errors"
+	"strings"
 )
 
 // GetDictTypeList 分页查询字典类型列表
@@ -119,4 +120,99 @@ func DeleteDictItem(id uint) error {
 		return errors.New("字典项不存在")
 	}
 	return database.DB.Delete(&item).Error
+}
+
+// MaxImportRows 导入行数上限（字典项规模小，同步处理；超过即拒绝防止阻塞请求）
+const MaxImportRows = 500
+
+// GetAllDictTypesWithItems 一次取出全量字典类型及其字典项（供全量导出）
+func GetAllDictTypesWithItems() ([]models.DictType, error) {
+	var types []models.DictType
+	if err := database.DB.Order("sort ASC, id ASC").Find(&types).Error; err != nil {
+		return nil, err
+	}
+	// 逐类型加载字典项，避免 gorm Preload 对同属主记录关联匹配的隐式全表扫描
+	for i := range types {
+		if err := database.DB.Where("dict_type_id = ?", types[i].ID).
+			Order("sort ASC, id ASC").Find(&types[i].Items).Error; err != nil {
+			return nil, err
+		}
+	}
+	return types, nil
+}
+
+// GetDictItemsAll 取单个类型的全部字典项（供单类型导出/模板）
+func GetDictItemsAll(typeID uint) ([]models.DictItem, error) {
+	var items []models.DictItem
+	if err := database.DB.Where("dict_type_id = ?", typeID).
+		Order("sort ASC, id ASC").Find(&items).Error; err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+// DictItemImportRow 导入行结构，与 xlsx 列头一一对应：label | value | sort | status | remark
+type DictItemImportRow struct {
+	Label  string
+	Value  string
+	Sort   int
+	Status int
+	Remark string
+}
+
+// ImportDictItems 按 value 覆盖合并导入字典项：
+// value 已存在（同属当前 dict_type_id）→ 更新 label/sort/status/remark；不存在 → 新增。
+// 文件未涉及的既有项保留（非全量替换）。返回新增/更新条数。
+// 行数超上限或出现非法 status 时整体拒绝，不做部分写入。
+func ImportDictItems(typeID uint, rows []DictItemImportRow) (newCount, updatedCount int, err error) {
+	if len(rows) > MaxImportRows {
+		return 0, 0, errors.New("导入行数超过上限")
+	}
+
+	// 一次性取出当前类型的既有项，建立 value → 记录的索引
+	var existing []models.DictItem
+	if err := database.DB.Where("dict_type_id = ?", typeID).Find(&existing).Error; err != nil {
+		return 0, 0, err
+	}
+	byValue := make(map[string]*models.DictItem, len(existing))
+	for i := range existing {
+		byValue[existing[i].Value] = &existing[i]
+	}
+
+	for _, r := range rows {
+		// 必填字段校验：label/value 任一缺失则跳过该行
+		if strings.TrimSpace(r.Label) == "" || strings.TrimSpace(r.Value) == "" {
+			continue
+		}
+		// 状态校验：仅允许 0/1（与模型 status 语义一致）
+		if r.Status != 0 && r.Status != 1 {
+			return 0, 0, errors.New("状态字段仅允许 0 或 1")
+		}
+		if item, ok := byValue[r.Value]; ok {
+			if err := database.DB.Model(item).Updates(map[string]interface{}{
+				"label":  r.Label,
+				"sort":   r.Sort,
+				"status": r.Status,
+				"remark": r.Remark,
+			}).Error; err != nil {
+				return 0, 0, err
+			}
+			updatedCount++
+		} else {
+			item := &models.DictItem{
+				DictTypeID: typeID,
+				Label:      r.Label,
+				Value:      r.Value,
+				Sort:       r.Sort,
+				Status:     r.Status,
+				Remark:     r.Remark,
+			}
+			if err := database.DB.Create(item).Error; err != nil {
+				return 0, 0, err
+			}
+			byValue[r.Value] = item
+			newCount++
+		}
+	}
+	return newCount, updatedCount, nil
 }
