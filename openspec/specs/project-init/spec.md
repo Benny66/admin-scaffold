@@ -19,7 +19,7 @@ TBD - created by archiving change add-project-init-script. Update Purpose after 
 
 ### Requirement: 运行时标识与密钥重置
 
-初始化 MUST 替换运行时标识（env var 前缀 `BASE_BACKEND_*`、package.sh 二进制名/压缩包名、JWT Issuer），并 MUST 将默认密钥替换为随机串。
+初始化 MUST 替换运行时标识（env var 前缀 `BASE_BACKEND_*`、`package.sh` 二进制名/压缩包名、JWT Issuer），MUST 将默认密钥替换为随机串，并 MUST 改写 `miniapp/package.json` 的 `name` 与 `miniapp/src/manifest.json` 的 `name` 字段为新项目名。`miniapp/src/manifest.json` 的 `mp-weixin.appid` MUST 保留基座占位，由具体项目开发者填入。
 
 #### Scenario: 环境变量前缀随项目名
 
@@ -35,6 +35,16 @@ TBD - created by archiving change add-project-init-script. Update Purpose after 
 
 - **WHEN** 未传 `--db-name`
 - **THEN** 数据库默认名保持 `base_backend.db` / `base_backend` 不变；仅当显式传 `--db-name` 时替换
+
+#### Scenario: miniapp 包名与 manifest 改写
+
+- **WHEN** 执行 `make init name=my-system`
+- **THEN** `miniapp/package.json` 的 `name` 改为 `my-system-miniapp`，`miniapp/src/manifest.json` 的 `name` 改为 `my-system`，`mp-weixin.appid` 不被改写
+
+#### Scenario: appid 不被脚本改写
+
+- **WHEN** 初始化执行完成
+- **THEN** `miniapp/src/manifest.json` 的 `mp-weixin.appid` 保留为基座占位（如 `touristappid` 或空串），由具体项目开发者填入
 
 ### Requirement: 清理 OpenSpec 历史与运行时残留
 

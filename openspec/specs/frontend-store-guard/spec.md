@@ -36,14 +36,24 @@ TBD - created by archiving change frontend-store-guard. Update Purpose after arc
 - **WHEN** 所有 `this.<成员>()` 调用都有对应的 action 定义
 - **THEN** guard 测试通过
 
-### Requirement: 两端同等覆盖
+### Requirement: 三端同等覆盖
 
-护栏 MUST 对 `frontend/` 与 `mobile/` 各执行一组断言，任一端违规即失败。
+护栏 MUST 对 `frontend/`、`mobile/` 与 `miniapp/` 各执行一组断言，任一端违规即失败。
 
 #### Scenario: 仅一端漏定义
 
 - **WHEN** 移动端 store 定义了某 action 而桌面端未定义，但两端 `fetchSystemInfo` 都调用了它
 - **THEN** guard 测试仅对桌面端报红，并指明是哪一端
+
+#### Scenario: miniapp store 也被覆盖
+
+- **WHEN** `miniapp/src/stores/app.js` 引用了不存在的成员
+- **THEN** guard 测试对 miniapp 端报红，错误信息指明文件名、成员名与所在端
+
+#### Scenario: 三端同等断言
+
+- **WHEN** 三端中任一端的 `appStore.<成员>` 无法在对应 `stores/app.js` 中解析到
+- **THEN** guard 测试失败，错误信息指明端别（frontend / mobile / miniapp）
 
 ### Requirement: 护栏失效时必须报红而非静默通过
 
