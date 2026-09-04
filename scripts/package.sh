@@ -103,6 +103,11 @@ if [ -d "$ROOT_DIR/mobile/dist" ]; then
     cp -r "$ROOT_DIR/mobile/dist" "$DEPLOY_DIR/dist-mobile"
 fi
 
+# 品牌静态资源 → static（后端 /static/ 托管：logo/favicon/登录背景图）
+if [ -d "$ROOT_DIR/backend/static" ]; then
+    cp -r "$ROOT_DIR/backend/static" "$DEPLOY_DIR/static"
+fi
+
 # config.yaml：从 example 复制，强制 release
 cp "$ROOT_DIR/backend/config/config.example.yaml" "$DEPLOY_DIR/config.yaml"
 sed -i.bak 's/mode: "debug"/mode: "release"/' "$DEPLOY_DIR/config.yaml" && rm -f "$DEPLOY_DIR/config.yaml.bak"
@@ -152,6 +157,7 @@ echo "    config.yaml      - 配置文件（release 模式）"
 echo "    $BINARY_NAME     - 后端服务（已编译，可独立运行）"
 echo "    dist/            - 桌面端页面"
 echo "    dist-mobile/     - 移动端 H5 页面"
+echo "    static/          - 品牌静态资源（logo/favicon/登录背景图）"
 echo "    启动脚本          - start.sh / start.bat"
 echo ""
 echo "  目标机器无需 Go / Node.js / 任何运行时环境。"
