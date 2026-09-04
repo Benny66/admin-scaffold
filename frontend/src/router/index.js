@@ -15,34 +15,44 @@ const routes = [
     redirect: '/system/user',
     children: [
       {
-        path: 'system/user',
-        name: 'SystemUser',
-        component: () => import('@/views/system/user/index.vue'),
-        meta: { title: '用户管理', icon: 'User', permission: 'users:view' },
-      },
-      {
-        path: 'system/role',
-        name: 'SystemRole',
-        component: () => import('@/views/system/role/index.vue'),
-        meta: { title: '角色管理', icon: 'UserFilled', permission: 'roles:view' },
-      },
-      {
-        path: 'system/permission',
-        name: 'SystemPermission',
-        component: () => import('@/views/system/permission/index.vue'),
-        meta: { title: '权限管理', icon: 'Key', permission: 'permissions:view' },
-      },
-      {
-        path: 'system/dict',
-        name: 'SystemDict',
-        component: () => import('@/views/system/dict/index.vue'),
-        meta: { title: '字典管理', icon: 'Collection', permission: 'dict:view' },
-      },
-      {
-        path: 'system/log',
-        name: 'SystemLog',
-        component: () => import('@/views/system/log/index.vue'),
-        meta: { title: '操作日志', icon: 'Document', permission: 'logs:view' },
+        // 系统管理分组：纯容器，无 component/name，仅承载子路由（见 menu-grouping D1/D2）
+        path: 'system',
+        meta: { title: '系统管理', icon: 'Setting' },
+        // 系统管理下没有「首页」叶子（path: ''），故用 redirect 兜底直达 /system 的访问
+        // 不被 404——满足 menu-grouping ESLint 规则「分组可达」要求。
+        redirect: '/system/user',
+        children: [
+          {
+            path: 'user',
+            name: 'SystemUser',
+            component: () => import('@/views/system/user/index.vue'),
+            meta: { title: '用户管理', icon: 'User', permission: 'users:view' },
+          },
+          {
+            path: 'role',
+            name: 'SystemRole',
+            component: () => import('@/views/system/role/index.vue'),
+            meta: { title: '角色管理', icon: 'UserFilled', permission: 'roles:view' },
+          },
+          {
+            path: 'permission',
+            name: 'SystemPermission',
+            component: () => import('@/views/system/permission/index.vue'),
+            meta: { title: '权限管理', icon: 'Key', permission: 'permissions:view' },
+          },
+          {
+            path: 'dict',
+            name: 'SystemDict',
+            component: () => import('@/views/system/dict/index.vue'),
+            meta: { title: '字典管理', icon: 'Collection', permission: 'dict:view' },
+          },
+          {
+            path: 'log',
+            name: 'SystemLog',
+            component: () => import('@/views/system/log/index.vue'),
+            meta: { title: '操作日志', icon: 'Document', permission: 'logs:view' },
+          },
+        ],
       },
       // 【gen:route】
     ],

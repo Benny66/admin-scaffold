@@ -15,12 +15,18 @@ AI 定位代码时**先读本文件**，不要用 `find` 盲扫。这是「上�
 |---|---|---|
 | 模块名 / 前端目录 | 单数 | `asset`、`views/asset/index.vue` |
 | 后端路由路径 | 复数 | `/assets` |
-| 前端路由 path | 复数 | `assets` |
+| 前端分组 path（自建时） | 复数 | `assets` |
+| 前端叶子 path（自建时） | 空串 | `''`（首叶子 path:''，URL 为 `/assets`） |
+| 前端叶子 path（注入时） | 复数 | `asset_categories`（URL 为 `/<group>/<复数>`） |
 | 权限码前缀 | 复数 | `assets:view` / `assets:create` / `assets:edit` / `assets:delete` |
 | Go 标识符 | PascalCase | `Asset`、`GetAssetList` |
 
 复数规则由 `backend/scripts/pluralize.sh` 统一产出（s/x/z/ch/sh → +es，辅音+y → ies，其余 +s）。
 它是生成器与 guard 测试的共同单一真相，**不要在别处另写一套规则**。
+
+> **菜单结构**：前端 `router/index.js` 的 `path: '/'` children 是两级（分组 + 叶子），
+> 不是一级平铺。新增菜单 MUST 归入分组（`make gen group=` 或按 `menu-grouping` 结构手写），
+> 由 ESLint 自定义规则 `eslint-rules/menu-group.js` 强制（`make lint` 报红）。
 
 ## 后端（backend/）
 
@@ -41,7 +47,7 @@ AI 定位代码时**先读本文件**，不要用 `find` 盲扫。这是「上�
 |---|---|---|
 | 新增页面 | `views/<domain>/index.vue` | `make gen` 会自动生成 |
 | 加接口定义 | `api/index.js` | 按模块分组追加 |
-| 加路由/菜单 | `router/index.js` | 菜单由 `Layout.vue` 从路由派生，改这一处即可；**禁止**改 `Layout.vue`（有护栏） |
+| 加路由/菜单 | `router/index.js` | 菜单由 `Layout.vue` 从路由声明派生（两级分组），改这一处即可；**禁止**改 `Layout.vue`（有护栏）；**禁止**裸挂顶层（menu-grouping ESLint 规则强制） |
 | 状态管理 | `stores/app.js` | 统一 `stores/` |
 | 请求封装 | `utils/request.js` | 拦截器统一处理 401/403 |
 
@@ -59,7 +65,8 @@ AI 定位代码时**先读本文件**，不要用 `find` 盲扫。这是「上�
 
 ```bash
 make test    # 后端全部测试（含 guard 护栏）
-make lint    # go vet
+make lint    # go vet + 四端 ESLint（含 menu-grouping 菜单结构规则）
 make smoke   # 冒烟：启动→登录→命中受保护路由→断言
-make gen name=<模块名>   # 生成新模块骨架
+make gen name=<模块名>                       # 生成新模块骨架（自建分组）
+make gen name=<模块名> group=<分组 path>     # 生成新模块骨架（注入已有分组）
 ```

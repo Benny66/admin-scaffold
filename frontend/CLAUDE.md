@@ -33,7 +33,17 @@ AI 在 `frontend/`（Web 端）下编写 Vue3 代码时 MUST 遵守本文件。�
 - `appStore.hasPermission(code)` 用于按钮级/菜单级控制。
 - 路由守卫：未登录访问受保护页 → 跳 `/login`。
 
-## 5. 系统名称
+## 5. 菜单结构与权限过滤（menu-grouping）
+
+- `frontend/src/router/index.js` 的 `path: '/'` 路由 `children` MUST 采用两级结构：
+  - 外层是**分组容器**（`path` + `meta.title` + `meta.icon`，**无 `component`/`name`**），仅展开/收起，不可点
+  - 内层是**叶子页面**（必有 `meta.title` + `meta.icon` + `meta.permission`）
+- 新增菜单 MUST 归入分组——用 `make gen name=<模块> [group=<分组>]` 生成器自动注入；手工写时按 `menu-grouping` 结构声明，**禁止裸挂顶层**（`meta.standalone: true` 例外，为「首页/工作台」预留）。
+- 分组可达性：每个分组必须满足「首叶子 `path: ''` 或 分组自身声明 `redirect`」之一，否则直接访问分组 URL 会 404。
+- Layout.vue 的 `menus` computed 按两级派生：先按 `meta.permission` 过滤每组叶子（缺省可见、`isAdmin` 直通），再丢弃叶子数为 0 的分组（空分组不留空壳）。
+- ⚙️ 该结构由 ESLint 自定义规则 `eslint-rules/menu-group.js` 强制（`make lint` 报红）——AST 解析不到根路由时也 MUST 报错而非静默放行。
+
+## 6. 系统名称
 
 - 系统名称 MUST 来自 `appStore.systemName`（由 `/system/info` 拉取），禁止硬编码「企业管理系统」字符串。
 - `index.html` 的 `<title>` 是中性占位（`Base Admin`），运行时由 `fetchSystemInfo` + `document.title` 覆盖为真实品牌名。

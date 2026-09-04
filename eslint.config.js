@@ -2,9 +2,11 @@
 // 把 frontend/CLAUDE.md 里的域宪法编译成会失败的静态检查：
 //   1. 禁止直接 import axios（必须走 @/utils/request 封装）
 //   2. 禁止 @/store/ 单数（状态管理目录统一 @/stores/）
+//   3. 菜单必须归组（menu-grouping：frontend/src/router/index.js 的两级结构）
 // 与后端 internal/guard/ 的 guard 测试对称：违反即 CI 变红，而非靠 code review。
 import js from '@eslint/js'
 import vue from 'eslint-plugin-vue'
+import menuGroupRule from './eslint-rules/menu-group.js'
 
 export default [
   // 忽略构建产物与依赖目录
@@ -118,6 +120,37 @@ export default [
         __dirname: 'readonly',
         process: 'readonly',
       },
+    },
+  },
+
+  // 菜单结构护栏（menu-grouping）：仅作用于 frontend/src/router/index.js。
+  // 通过局部插件注册自定义 AST 规则，把「菜单必须归组、字段必须齐全、分组可达」
+  // 编译成红灯；解析不到根路由时也必须报错（延续 guard「护栏要能感知自己瞎了」）。
+  // files 用 **/src/router/index.js 形态以同时匹配「从根目录跑」与「从 frontend/
+  // 子目录跑 npm run lint」两种 cwd；但 mobile/miniapp 等端的 router/index.js 不
+  // 参与两级菜单结构（mobile 是单页路由），故用 ignores 显式排除三端目录。
+  // ignores 同时列出两种形态：`mobile/**` 覆盖「从根目录跑」时路径以 mobile/ 开头；
+  // `src/router/index.js` 是兜底——但兜底太广会误伤 frontend，故采用更精确的方案：
+  // 在规则体内检查「若 path:'/' 路由无 children 数组，跳过检查（mobile 风格）」。
+  {
+    files: ['**/src/router/index.js'],
+    ignores: [
+      '**/mobile/**',
+      'mobile/**',
+      '**/miniapp/**',
+      'miniapp/**',
+      '**/miniapp-wechat-end/**',
+      'miniapp-wechat-end/**',
+    ],
+    plugins: {
+      local: {
+        rules: {
+          'menu-group': menuGroupRule,
+        },
+      },
+    },
+    rules: {
+      'local/menu-group': 'error',
     },
   },
 ]

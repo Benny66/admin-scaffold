@@ -22,10 +22,24 @@
         active-text-color="#ffffff"
         class="menu"
       >
-        <el-menu-item v-for="item in menus" :key="item.path" :index="item.path">
-          <el-icon><component :is="item.icon" /></el-icon>
-          <template #title>{{ item.title }}</template>
-        </el-menu-item>
+        <el-sub-menu
+          v-for="group in menus"
+          :key="group.path"
+          :index="group.path"
+        >
+          <template #title>
+            <el-icon><component :is="group.icon" /></el-icon>
+            <span>{{ group.title }}</span>
+          </template>
+          <el-menu-item
+            v-for="item in group.children"
+            :key="item.path"
+            :index="item.path"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <template #title>{{ item.title }}</template>
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
       <!-- 零可见菜单时的空态兜底，避免侧边栏一片空白（见 design D9） -->
       <el-empty
@@ -108,21 +122,38 @@ const isCollapse = ref(false)
 const userInfo = computed(() => appStore.userInfo)
 const systemName = computed(() => appStore.systemName || 'Base Admin')
 
-// 菜单从路由声明派生（单一数据源），并按 meta.permission 过滤（见 design D1/D2/D3）。
-// 新增业务模块只需在 router/index.js 注册一条带 meta.permission 的路由，菜单自动出现。
+// 菜单从路由声明派生（单一数据源），按两级分组渲染（见 menu-grouping design D1/D3）。
+// 派生顺序：先按 meta.permission 过滤每组叶子（缺省可见、isAdmin 直通），再丢弃叶子数为 0
+// 的分组——空分组不留空壳标题。新增业务模块只需在 router/index.js 注册分组+叶子路由。
 const menus = computed(() => {
   const root = router.options.routes.find((r) => r.path === '/')
-  const children = (root && root.children) || []
-  return children
-    .filter((item) => {
-      const code = item.meta && item.meta.permission
-      return !code || appStore.hasPermission(code)
+  const groups = (root && root.children) || []
+  const result = []
+  for (const group of groups) {
+    // 只渲染分组（有 children 的节点）；裸叶子由 ESLint 规则禁止挂顶层
+    if (!Array.isArray(group.children) || group.children.length === 0) continue
+    const leaves = group.children
+      .filter((item) => {
+        const code = item.meta && item.meta.permission
+        return !code || appStore.hasPermission(code)
+      })
+      .map((item) => ({
+        // 父 path + 子 path 拼出完整 URL（如 system + user = /system/user）
+        path: '/' + [group.path, (item.path || '').replace(/^\//, '')]
+          .filter(Boolean)
+          .join('/'),
+        title: item.meta && item.meta.title,
+        icon: item.meta && item.meta.icon,
+      }))
+    if (leaves.length === 0) continue // 空分组整组丢弃
+    result.push({
+      path: '/' + (group.path || '').replace(/^\//, ''),
+      title: group.meta && group.meta.title,
+      icon: group.meta && group.meta.icon,
+      children: leaves,
     })
-    .map((item) => ({
-      path: '/' + (item.path || '').replace(/^\//, ''),
-      title: item.meta && item.meta.title,
-      icon: item.meta && item.meta.icon,
-    }))
+  }
+  return result
 })
 
 const passwordDialog = ref(false)

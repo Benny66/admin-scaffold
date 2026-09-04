@@ -18,13 +18,16 @@ lint:
 smoke:
 	backend/scripts/smoke.sh
 
-# 生成新模块骨架（用法：make gen name=<模块名>）
+# 生成新模块骨架（用法：make gen name=<模块名> [group=<分组 path>]）
+#   - 不传 group：自建分组（path=<复数>，首叶子 path:''，URL 为 /<复数>）
+#   - 传 group=<已存在分组 path>：把新模块注入该分组的 children（URL 为 /<group>/<复数>）
 gen:
 	@if [ -z "$(name)" ]; then \
-		echo "用法: make gen name=<模块名>（如 make gen name=asset）"; \
+		echo "用法: make gen name=<模块名>（如 make gen name=asset，可选 group=<分组>）"; \
 		exit 1; \
 	fi
-	backend/scripts/gen-module.sh "$(name)"
+	backend/scripts/gen-module.sh "$(name)" \
+		$$([ -n "$(group)" ] && echo "group=$(group)")
 
 # 一键初始化新项目（用法：make init name=<项目名> [module=...] [db_name=...] [issuer=...] [app_name=...]）
 init:

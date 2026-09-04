@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # 模块代码生成器：从「黄金路径」唯一范例 _example/ 生成新模块的完整骨架。
 #
-# 用法：backend/scripts/gen-module.sh <模块名>    （或 make gen name=<模块名>）
+# 用法：backend/scripts/gen-module.sh <模块名> [group=<分组 path>]
+#       （或 make gen name=<模块名> [group=<分组 path>]）
 #   模块名用小写（如 asset、asset_category），生成：
 #     backend/models/<name>.go
 #     backend/services/<name>_service.go
@@ -11,7 +12,9 @@
 #     database.go 注入权限码（【gen:permissions】锚点后）
 #     frontend/src/views/<name>/index.vue
 #     frontend/src/api/index.js 追加 API 定义
-#     frontend/src/router/index.js 注入路由条目（【gen:route】锚点前）
+#     frontend/src/router/index.js 注入分组菜单路由：
+#       - 不传 group：自建分组（path=<复数>，首叶子 path:''，URL 为 /<复数>）
+#       - 传 group=<已存在分组 path>：注入该分组的 children，URL 为 /<group>/<复数>
 #
 # 路由路径与权限码前缀统一使用资源复数（/assets、assets:view），由 scripts/pluralize.sh
 # 产出——它是复数规则的单一真相，本脚本与 guard 测试共同调用。
@@ -24,7 +27,26 @@ BACKEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$BACKEND_DIR/.." && pwd)"
 
 # ---------- 参数解析 ----------
-NAME="${1:-}"
+# 支持位置参数 + group=<path> 关键字参数两种形态。make gen 透传后者。
+NAME=""
+GROUP=""
+for arg in "$@"; do
+  case "$arg" in
+    group=*)
+      GROUP="${arg#group=}"
+      ;;
+    *)
+      if [[ -z "$NAME" ]]; then
+        NAME="$arg"
+      else
+        echo "错误：无法识别的参数「$arg」" >&2
+        echo "用法：$0 <模块名> [group=<分组 path>]" >&2
+        exit 1
+      fi
+      ;;
+  esac
+done
+
 if [[ -z "$NAME" ]]; then
   echo "错误：缺少模块名" >&2
   echo "用法：$0 <模块名>（如 $0 asset）" >&2
@@ -34,6 +56,12 @@ fi
 # 校验模块名：小写字母/数字/下划线/连字符
 if [[ ! "$NAME" =~ ^[a-z][a-z0-9_-]*$ ]]; then
   echo "错误：模块名必须是小写字母/数字/下划线/连字符，且以字母开头（当前：$NAME）" >&2
+  exit 1
+fi
+
+# 校验 group：若提供则必须是合法 path（小写字母/数字/下划线/连字符，非空）
+if [[ -n "$GROUP" && ! "$GROUP" =~ ^[a-z][a-z0-9_-]*$ ]]; then
+  echo "错误：group 必须是小写字母/数字/下划线/连字符，且以字母开头（当前：$GROUP）" >&2
   exit 1
 fi
 
@@ -230,24 +258,142 @@ printf '%s\n' "$API_BLOCK" >> "$API_FILE"
 echo "  ✓ frontend/src/api/index.js 已追加 API 定义"
 
 # ---------- 注入 frontend/src/router/index.js 路由条目 ----------
-# 菜单由 Layout.vue 从路由派生并按 meta.permission 过滤，故无需改动 Layout.vue。
+# 菜单由 Layout.vue 从路由声明派生并按 meta.permission 过滤，故无需也禁止改动 Layout.vue。
+# 两种注入模式（menu-grouping design D5）：
+#   1. 自建分组（GROUP 为空或不存在）：在顶层 【gen:route】 锚点前插入完整分组块
+#      分组 path=<复数>，首叶子 path:''，URL 为 /<复数>（向后兼容）
+#   2. 注入已有分组（GROUP 存在）：python 括号配对定位 path:'<group>' 的 children 数组边界
+#      在 ] 前插入叶子（子 path=<复数>，URL 为 /<group>/<复数>）
+
 ROUTE_ANCHOR='【gen:route】'
-FE_ROUTE_BLOCK=$(cat <<EOF
+
+# 先检测 group 是否真实存在：若 group 指定但在 router 中找不到，降级为自建分组并提示。
+# 不视为错误（spec：「未指定或分组不存在时新建一个分组」）。
+if [[ -n "$GROUP" ]]; then
+  if ! grep -qE "path: '${GROUP}'" "$FRONTEND_ROUTER"; then
+    echo "  ⚠ 指定的 group '${GROUP}' 不存在于 router/index.js，将自建分组（path=${PLURAL}）"
+    GROUP=""
+  fi
+fi
+
+if [[ -n "$GROUP" ]]; then
+  # ---------- 注入已有分组 ----------
+  # 找 path: '<group>' 后最近的 children: [ ... ]，在 ] 前插入叶子。
+  # 用括号配对定位 children 数组的闭合 ]，跳过字符串/注释里的 ] 以避免误闭合
+  # （router/index.js 注释里可能有中文方括号，但 ASCII ] 几乎只在代码里出现）。
+  LEAF_BLOCK=$(cat <<EOF
+          {
+            path: '${PLURAL}',
+            name: '${PASCAL}',
+            component: () => import('@/views/${NAME}/index.vue'),
+            // TODO: 把 title 换成中文菜单标题，并为该模块挑一个合适的图标
+            meta: { title: '${PASCAL}', icon: 'Document', permission: '${PLURAL}:view' },
+          },
+EOF
+  )
+  GROUP="$GROUP" LEAF_BLOCK="$LEAF_BLOCK" python3 -c '
+import os, sys, re
+group = os.environ["GROUP"]
+leaf = os.environ["LEAF_BLOCK"]
+if not leaf.endswith("\n"):
+    leaf += "\n"
+path = sys.argv[1]
+src = open(path, encoding="utf-8").read()
+
+# 单引号字符用 chr(39) 表达——bash 单引号包裹的 python 脚本里不能直接写单引号
+Q = chr(39)
+
+# 定位 path: "<group>"
+needle = "path: " + Q + group + Q
+i = src.find(needle)
+if i < 0:
+    sys.exit("错误：找不到 path: " + Q + group + Q + "——分组不存在")
+
+# 找其后最近的 children: [
+m = re.search(r"children\s*:\s*\[", src[i:])
+if not m:
+    sys.exit("错误：path: " + Q + group + Q + " 处未找到 children 数组——可能不是分组容器")
+arr_start = i + m.end() - 1  # 指向 [
+
+# 从 [ 开始括号配对，跳过字符串与注释里的 [ ] 以免误闭合
+# （router/index.js 注释里可能有中文方括号，但 ASCII ] 几乎只在代码里出现）
+bracket = 0
+j = arr_start
+in_str = None
+in_line_comment = False
+in_block_comment = False
+quote_chars = [chr(34), chr(39), chr(96)]  # double-quote, single-quote, backtick
+while j < len(src):
+    c = src[j]
+    if in_line_comment:
+        if c == "\n":
+            in_line_comment = False
+    elif in_block_comment:
+        if c == "*" and j + 1 < len(src) and src[j+1] == "/":
+            in_block_comment = False
+            j += 1
+    elif in_str is not None:
+        if c == "\\":
+            j += 1
+        elif c == in_str:
+            in_str = None
+    else:
+        if c == "/" and j + 1 < len(src) and src[j+1] == "/":
+            in_line_comment = True
+            j += 1
+        elif c == "/" and j + 1 < len(src) and src[j+1] == "*":
+            in_block_comment = True
+            j += 1
+        elif c in quote_chars:
+            in_str = c
+        elif c == "[":
+            bracket += 1
+        elif c == "]":
+            bracket -= 1
+            if bracket == 0:
+                # children 数组的闭合 ] 找到
+                between = src[arr_start+1:j]
+                if between.strip() == "":
+                    # 空数组：在 [ 后插入 leaf（leaf 自带前导换行与缩进）
+                    new_src = src[:arr_start+1] + "\n" + leaf + src[arr_start+1:]
+                else:
+                    # 非空数组：在 ] 所在行的行首前插入 leaf（保留 ] 行的原有缩进）
+                    # 否则 leaf 会吞掉 ] 行的前导空格，使 ] 跑到列 0
+                    line_start = src.rfind("\n", 0, j) + 1
+                    new_src = src[:line_start] + leaf + src[line_start:]
+                open(path, "w", encoding="utf-8").write(new_src)
+                sys.exit(0)
+    j += 1
+sys.exit("错误：children 数组的 ] 未闭合——router/index.js 结构异常")
+' "$FRONTEND_ROUTER"
+  FINAL_URL="/${GROUP}/${PLURAL}"
+  FINAL_GROUP="$GROUP"
+  echo "  ✓ frontend/src/router/index.js 已注入叶子到分组 ${GROUP}（URL: ${FINAL_URL}）"
+else
+  # ---------- 自建分组 ----------
+  # 在顶层 【gen:route】 锚点前插入完整分组块：分组 path=<复数>，首叶子 path:''，
+  # URL 为 /<复数>（与改动前 make gen 的寻址一致，向后兼容）。
+  GROUP_BLOCK=$(cat <<EOF
       {
+        // TODO: 把分组 title 换成中文菜单标题（如「资产管理」），并挑选合适的 icon
         path: '${PLURAL}',
-        name: '${PASCAL}',
-        component: () => import('@/views/${NAME}/index.vue'),
-        // TODO: 把 title 换成中文菜单标题，并为该模块挑一个合适的图标
-        meta: { title: '${PASCAL}', icon: 'Document', permission: '${PLURAL}:view' },
+        meta: { title: '${PASCAL}', icon: 'Document' },
+        children: [
+          {
+            path: '',
+            name: '${PASCAL}',
+            component: () => import('@/views/${NAME}/index.vue'),
+            // TODO: 把 title 换成中文菜单标题，并为该模块挑一个合适的图标
+            meta: { title: '${PASCAL}', icon: 'Document', permission: '${PLURAL}:view' },
+          },
+        ],
       },
 EOF
-)
-# 在锚点行之前插入（按行插入，跨平台可靠）
-# 同样补回被命令替换剥离的尾部换行。
-ROUTE_ANCHOR="$ROUTE_ANCHOR" FE_ROUTE_BLOCK="$FE_ROUTE_BLOCK" python3 -c '
+  )
+  ROUTE_ANCHOR="$ROUTE_ANCHOR" GROUP_BLOCK="$GROUP_BLOCK" python3 -c '
 import os, sys
 anchor = os.environ["ROUTE_ANCHOR"]
-block = os.environ["FE_ROUTE_BLOCK"]
+block = os.environ["GROUP_BLOCK"]
 if not block.endswith("\n"):
     block += "\n"
 path = sys.argv[1]
@@ -259,25 +405,35 @@ for ln in lines:
     out.append(ln)
 open(path, "w", encoding="utf-8").write("".join(out))
 ' "$FRONTEND_ROUTER"
-echo "  ✓ frontend/src/router/index.js 已注入路由条目（菜单自动出现，无需改动 Layout.vue）"
+  FINAL_URL="/${PLURAL}"
+  FINAL_GROUP="$PLURAL"
+  echo "  ✓ frontend/src/router/index.js 已自建分组 ${PLURAL}（URL: ${FINAL_URL}）"
+fi
 
 # ---------- 完成提示 ----------
 cat <<EOF
 
-✅ 模块「${NAME}」骨架生成完毕（路由 /${PLURAL}，权限码 ${PLURAL}:view/create/edit/delete）。
+✅ 模块「${NAME}」骨架生成完毕
+   · 菜单 URL：${FINAL_URL}
+   · 归属分组：${FINAL_GROUP}
+   · 后端路由：/${PLURAL}
+   · 权限码：${PLURAL}:view / create / edit / delete
 
 已自动生成，无需手工处理：
   · 后端三层 models / services / controllers
   · router.go 路由注册（挂载在 /${PLURAL}）
   · database.go 的 AutoMigrate 与 initBaseData 权限码
   · 前端页面 views/${NAME}/index.vue 与 API 定义
-  · 前端路由条目 router/index.js
-    （菜单由 Layout.vue 从路由派生并按 meta.permission 过滤，无需也禁止改动 Layout.vue）
+  · 前端分组菜单 router/index.js
+    （菜单由 Layout.vue 从路由声明派生并按 meta.permission 过滤，
+     无需也禁止改动 Layout.vue——见 frontend-rbac D1 / menu-grouping）
 
 后续手工步骤（生成器不自动处理，需 AI/开发者完成）：
-1. 填充业务逻辑：搜索「// TODO: 业务逻辑」锚点，实现唯一性校验、级联、关联等。
-2. 替换占位文案：前端路由条目的 title / icon，以及 initBaseData 中的权限中文名称。
-3. 验证：在仓库根目录执行 make test && make smoke
+1. 填充业务逻辑：搜索「// TODO: 业务逻辑」与「// TODO: 把 ... 换成中文」锚点，
+   实现唯一性校验、级联、关联等。
+2. 替换占位文案：前端路由的分组 title / icon、叶子 title / icon，
+   以及 initBaseData 中的权限中文名称。
+3. 验证：在仓库根目录执行 make test && make lint && make smoke
    （Makefile 只在根目录提供，backend/ 下没有 Makefile，故 make 目标不能在那里跑；
     若只需验证后端，可在 backend/ 下执行 go build ./... && go test ./...）
 EOF
