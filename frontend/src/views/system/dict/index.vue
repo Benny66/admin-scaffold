@@ -25,14 +25,15 @@
       >
         <el-table-column prop="id" label="编号" width="70" />
         <el-table-column prop="name" label="名称" min-width="120" show-overflow-tooltip />
-        <el-table-column label="操作" width="70" fixed="right">
+        <el-table-column prop="code" label="编码" min-width="120" show-overflow-tooltip />
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <span class="row-ops">
               <el-button v-permission="'dict:edit'" link type="primary" size="small" @click.stop="openTypeEdit(row)">
-                <el-icon><Edit /></el-icon>
+                <el-icon><Edit />编辑</el-icon>
               </el-button>
               <el-button v-permission="'dict:delete'" link type="danger" size="small" @click.stop="handleTypeDelete(row)">
-                <el-icon><Delete /></el-icon>
+                <el-icon><Delete />删除</el-icon>
               </el-button>
             </span>
           </template>
@@ -402,7 +403,7 @@ onMounted(() => {
   padding: 20px;
 }
 .left-pane {
-  width: 400px;
+  width: 500px;
   flex-shrink: 0;
 }
 .right-pane {
@@ -460,11 +461,9 @@ onMounted(() => {
 }
 /* 左栏行内 hover 显隐编辑/删除图标 */
 .row-ops {
-  display: none;
-}
-.el-table__row:hover .row-ops {
   display: inline-flex;
 }
+
 :deep(.current-type-row) {
   background-color: #ecf5ff !important;
 }
