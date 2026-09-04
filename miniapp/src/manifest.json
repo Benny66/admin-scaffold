@@ -1,0 +1,21 @@
+{
+  "name": "base-backend-miniapp",
+  "appid": "",
+  "description": "基座微信小程序端（uniapp + vue3 + pinia）",
+  "versionName": "1.0.0",
+  "versionCode": 100,
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "touristappid",
+    "setting": {
+      "urlCheck": false,
+      "esBuild": true,
+      "postcss": true,
+      "minified": true
+    },
+    "usingComponents": true,
+    "permission": {},
+    "scopes": {}
+  },
+  "vueVersion": "3"
+}

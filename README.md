@@ -1,24 +1,24 @@
 # Base 脚手架基座
 
-> 企业管理系统三端脚手架基座：Go + Gin + GORM + Vue3 + Element Plus + Vant
+> 企业管理系统多端脚手架基座：Go + Gin + GORM + Vue3 + Element Plus + Vant + uniapp
 
-这是一个**可运行的三端 monorepo 骨架**，从企业固定资产管理系统中提炼出的、与业务无关的可复用横切能力与工程约定。clone 后改名即可开始开发新项目。
+这是一个**可运行的多端 monorepo 骨架**，从企业固定资产管理系统中提炼出的、与业务无关的可复用横切能力与工程约定。clone 后改名即可开始开发新项目。
 
 ---
 
 ## 定位
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                    base/ 脚手架基座                            │
-├──────────────┬──────────────┬────────────────────────────────┤
-│   backend/   │  frontend/   │         mobile/                 │
-│  Go + Gin    │  Vue3 +      │       Vue3 + Vant               │
-│  GORM        │  Element Plus│       移动端骨架                 │
-│  三层分层    │  Pinia       │                                 │
-└──────────────┴──────────────┴────────────────────────────────┘
-              │                    │
-              └──────────┬─────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                    base/ 脚手架基座                                    │
+├──────────────┬──────────────┬──────────────────┬───────────────────┤
+│   backend/   │  frontend/   │     mobile/       │     miniapp/       │
+│  Go + Gin    │  Vue3 +      │   Vue3 + Vant     │  uniapp + Vue3     │
+│  GORM        │  Element Plus│   移动端骨架       │  微信小程序端       │
+│  三层分层    │  Pinia       │                   │  Pinia             │
+└──────────────┴──────────────┴──────────────────┴───────────────────┘
+              │                    │                    │
+              └──────────┬─────────┴──────────┬────────┘
                          ▼
               统一响应协议 + 统一鉴权 + RBAC
 ```
@@ -56,6 +56,12 @@ base/
 │       ├── utils/           # 请求封装等
 │       └── views/           # 页面（Login + system/ 五件套）
 ├── mobile/                  # 移动端（Vue3 + Vant）
+├── miniapp/                 # 微信小程序端（uniapp + Vue3 + Pinia）
+│   └── src/
+│       ├── api/             # API 定义
+│       ├── pages/           # 页面（pages.json 注册，非 views/）
+│       ├── stores/          # Pinia 状态（统一 stores/）
+│       └── utils/           # 请求封装等
 ├── docs/                    # 规范文档
 │   ├── 代码规范.md
 │   ├── 目录结构约定.md
@@ -107,6 +113,16 @@ npm install
 npm run dev
 ```
 
+### 第四步（可选）：启动微信小程序端
+
+```bash
+cd miniapp
+npm install
+npm run dev:mp-weixin
+```
+
+构建产物在 `miniapp/dist/dev/mp-weixin/`，用微信开发者工具打开该目录预览。首次使用需在 `miniapp/src/manifest.json` 填入小程序 `mp-weixin.appid`。
+
 ---
 
 ## 如何基于基座新建项目
@@ -145,6 +161,7 @@ npm run dev
 | 后端 | Go 1.21+ / Gin / GORM / SQLite(纯Go) + MySQL 双驱动 / JWT / bcrypt / yaml |
 | 前端 | Vue3 / Vite / Element Plus / Pinia / Vue Router / axios |
 | 移动端 | Vue3 / Vite / Vant / Pinia / Vue Router / axios |
+| 小程序端 | uniapp / Vue3 / Pinia / uni-mp-weixin / Vite |
 
 ---
 

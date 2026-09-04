@@ -71,12 +71,13 @@
 
           <p v-if="devTip" class="login-tip">{{ devTip }}</p>
         </div>
+
+        <!-- footer 移入右栏：分栏后只落在表单区底部，不跨左栏（design D7） -->
+        <footer class="login-footer">
+          <AppFooter />
+        </footer>
       </main>
     </div>
-
-    <footer class="login-footer">
-      <AppFooter />
-    </footer>
   </div>
 </template>
 
@@ -172,9 +173,10 @@ onMounted(() => {
 
 <style scoped>
 .login-page {
-  /* 登录页局部主题 token */
-  --brand-from: #1f6feb;
-  --brand-to: #0d3b8c;
+  /* 登录页局部主题 token。
+     --brand-from / --brand-to 不再在此写死：它们由 brand-color-extract 注入 :root
+     （取自 logo 主色）。此处若重新声明同名变量会覆盖 :root 的值，故只在渐变处
+     用 var() 的 fallback 兜底「未注入」场景。 */
   --card-width: 380px;
 
   min-height: 100%;
@@ -197,8 +199,13 @@ onMounted(() => {
   justify-content: center;
   padding: 40px;
   overflow: hidden;
-  /* 无背景图时的兜底：渐变（scrim 仅在有图时叠加，避免渐变发灰） */
-  background: linear-gradient(135deg, var(--brand-from) 0%, var(--brand-to) 100%);
+  /* 无背景图时的兜底：渐变（scrim 仅在有图时叠加，避免渐变发灰）。
+     色源取注入到 :root 的品牌变量，未注入时回退基座蓝。 */
+  background: linear-gradient(
+    135deg,
+    var(--brand-from, #1f6feb) 0%,
+    var(--brand-to, #0d3b8c) 100%
+  );
 }
 
 .brand-bg {
@@ -216,7 +223,13 @@ onMounted(() => {
 .brand-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(31, 111, 235, 0.72) 0%, rgba(13, 59, 140, 0.85) 100%);
+  /* rgba() 不能把 CSS 变量当色值分量用，故 scrim 色由 deriveThemeVars 预派生后
+     整体注入（--brand-scrim-from / --brand-scrim-to），此处只负责取用。 */
+  background: linear-gradient(
+    135deg,
+    var(--brand-scrim-from, rgba(31, 111, 235, 0.72)) 0%,
+    var(--brand-scrim-to, rgba(13, 59, 140, 0.85)) 100%
+  );
 }
 
 .brand-content {
@@ -257,14 +270,22 @@ onMounted(() => {
 /* ---------------- 右栏：表单区 ---------------- */
 .login-form-area {
   flex: 1;
+  /* 纵向布局：表单卡片 flex:1 撑满上方，footer 自然落底（design D7）。
+     窄屏单列时同样是 column，footer 仍在页面底部。 */
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
 }
 .login-card {
+  flex: 1;
   width: 100%;
   max-width: var(--card-width);
+  /* 撑满后让表单内容保持垂直居中，而非贴顶 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .card-title {
   font-size: 24px;
@@ -296,10 +317,11 @@ onMounted(() => {
   font-size: 12px;
 }
 
-/* ---------------- 页脚 ---------------- */
+/* ---------------- 页脚（右栏底部，与表单卡片同宽） ---------------- */
 .login-footer {
   flex-shrink: 0;
-  padding: 0 24px;
+  width: 100%;
+  max-width: var(--card-width);
 }
 
 /* ---------------- 窄屏：折叠为单列（品牌带在上、表单在下） ---------------- */

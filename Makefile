@@ -1,17 +1,18 @@
 # Base 脚手架统一入口：AI 只需记住 make <target>，无需记忆零散脚本路径。
 # 目标：test / lint / smoke / gen / build / dev
 
-.PHONY: test lint smoke gen init build dev dev-backend dev-frontend
+.PHONY: test lint smoke gen init build dev dev-backend dev-frontend dev-mp build-mp
 
 # 后端全部测试（含 internal/guard 架构护栏）
 test:
 	cd backend && go test ./...
 
-# 静态检查：后端 vet + 前端 ESLint + 移动端 ESLint
+# 静态检查：后端 vet + 前端 ESLint + 移动端 ESLint + 小程序 ESLint
 lint:
 	cd backend && go vet ./...
 	cd frontend && npm run lint
 	cd mobile && npm run lint
+	cd miniapp && npm run lint
 
 # 冒烟：构建 → 启动 → 登录 → 命中受保护路由 → 断言 → 清理
 smoke:
@@ -57,3 +58,11 @@ dev-backend:
 
 dev-frontend:
 	cd frontend && npm run dev
+
+# 小程序 dev（需配合微信开发者工具打开 miniapp/dist/dev/mp-weixin/）
+dev-mp:
+	cd miniapp && npm run dev:mp-weixin
+
+# 构建小程序 mp-weixin 产物
+build-mp:
+	cd miniapp && npm run build:mp-weixin

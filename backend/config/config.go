@@ -17,6 +17,18 @@ type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
 	JWT      JWTConfig      `yaml:"jwt"`
+	Wechat   WechatConfig   `yaml:"wechat"`
+}
+
+// WechatConfig 微信小程序登录配置（仅 mp-login 使用）
+//
+// 刻意不接入环境变量覆盖通道（与 AppConfig 品牌段一致）：
+// secret 是高敏感凭证，env 容易通过子进程 / ps aux / 容器 inspect 泄露，
+// config.yaml 由部署侧管控权限更稳。未配置时 mp-login 返回 500 + 明确指引，
+// 不影响基座开箱启动。
+type WechatConfig struct {
+	AppID  string `yaml:"app_id"`
+	Secret string `yaml:"secret"`
 }
 
 // AppConfig 应用配置
@@ -111,6 +123,10 @@ func init() {
 			Secret:        "base-backend-secret-key-change-me",
 			ExpireSeconds: 3600,
 		},
+		Wechat: WechatConfig{
+			AppID:  "",
+			Secret: "",
+		},
 	}
 
 	// 尝试从 YAML 配置文件加载
@@ -185,6 +201,10 @@ type yamlFile struct {
 		Secret        string `yaml:"secret"`
 		ExpireSeconds int    `yaml:"expire_seconds"`
 	} `yaml:"jwt"`
+	Wechat struct {
+		AppID  string `yaml:"app_id"`
+		Secret string `yaml:"secret"`
+	} `yaml:"wechat"`
 }
 
 // loadYAMLConfig 从 config.yaml 加载配置
@@ -268,6 +288,12 @@ func loadYAMLConfig() {
 	}
 	if yf.JWT.ExpireSeconds > 0 {
 		GlobalConfig.JWT.ExpireSeconds = yf.JWT.ExpireSeconds
+	}
+	if yf.Wechat.AppID != "" {
+		GlobalConfig.Wechat.AppID = yf.Wechat.AppID
+	}
+	if yf.Wechat.Secret != "" {
+		GlobalConfig.Wechat.Secret = yf.Wechat.Secret
 	}
 
 	log.Printf("已加载配置文件: %s", configPath)

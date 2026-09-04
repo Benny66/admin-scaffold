@@ -1,4 +1,4 @@
-// 根目录统一 ESLint 配置（flat config）—— 前端与移动端共享的「架构护栏」。
+// 根目录统一 ESLint 配置（flat config）—— 前端、移动端与小程序端共享的「架构护栏」。
 // 把 frontend/CLAUDE.md 里的域宪法编译成会失败的静态检查：
 //   1. 禁止直接 import axios（必须走 @/utils/request 封装）
 //   2. 禁止 @/store/ 单数（状态管理目录统一 @/stores/）
@@ -57,6 +57,55 @@ export default [
     files: ['**/utils/request.js'],
     rules: {
       'no-restricted-imports': 'off',
+    },
+  },
+
+  // miniapp 段差异化规则（miniapp-wechat-end spec / frontend-guardrails spec）：
+  //   - 关闭 axios 禁令（miniapp 不引 axios，地道写法是 uni.request）
+  //   - 保留 @/store/ 单数禁令（多端统一铁律）
+  //   - uni 是 uniapp 全局对象，声明为 readonly 全局变量
+  {
+    files: ['miniapp/src/**'],
+    languageOptions: {
+      globals: {
+        uni: 'readonly',
+      },
+    },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/store', '@/store/*'],
+              message: '状态管理目录必须统一为 @/stores/（复数），禁止 @/store/ 单数回潮',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // miniapp 禁止直接调 uni.request，强制走 @/utils/request 封装
+  // （封装层自身在下面单独豁免）
+  {
+    files: ['miniapp/src/**', '!miniapp/src/utils/request.js'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.object.name='uni'][callee.property.name='request']",
+          message: '禁止直接调用 uni.request，请使用 @/utils/request 的封装实例',
+        },
+      ],
+    },
+  },
+
+  // 豁免：miniapp/src/utils/request.js 是封装层本身，可合法调用 uni.request
+  {
+    files: ['miniapp/src/utils/request.js'],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
 

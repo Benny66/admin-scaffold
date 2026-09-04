@@ -131,10 +131,9 @@ onMounted(() => {
 
 <style scoped>
 .login-page {
-  /* 登录页局部主题 token */
-  --brand-from: #1989fa;
-  --brand-to: #0d3b8c;
-
+  /* 登录页局部尺寸 token。
+     --brand-from / --brand-to 由 brand-color-extract 注入 :root（取自 logo 主色），
+     此处不再声明同名变量（会覆盖 :root 的值），只在渐变处用 var() fallback 兜底。 */
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -152,8 +151,13 @@ onMounted(() => {
   justify-content: center;
   padding: 24px;
   overflow: hidden;
-  /* 无背景图时的兜底：渐变（scrim 仅在有图时叠加） */
-  background: linear-gradient(135deg, var(--brand-from) 0%, var(--brand-to) 100%);
+  /* 无背景图时的兜底：渐变（scrim 仅在有图时叠加）。
+     色源取注入到 :root 的品牌变量，未注入时回退移动端现有的 #1989fa → #0d3b8c。 */
+  background: linear-gradient(
+    135deg,
+    var(--brand-from, #1989fa) 0%,
+    var(--brand-to, #0d3b8c) 100%
+  );
 }
 
 .brand-bg {
@@ -171,7 +175,12 @@ onMounted(() => {
 .brand-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(25, 137, 250, 0.7) 0%, rgba(13, 59, 140, 0.85) 100%);
+  /* scrim 色由 deriveThemeVars 预派生后整体注入，此处只负责取用（rgba 不接受变量分量） */
+  background: linear-gradient(
+    135deg,
+    var(--brand-scrim-from, rgba(25, 137, 250, 0.7)) 0%,
+    var(--brand-scrim-to, rgba(13, 59, 140, 0.85)) 100%
+  );
 }
 
 .brand-content {

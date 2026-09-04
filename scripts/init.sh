@@ -133,10 +133,11 @@ def transform(s):
     s = re.sub(r'^module base-backend\b', f'module {module}', s, flags=re.M)
     # 4) import 路径（含 _example/ 模板）：base-backend/ → module/
     s = s.replace("base-backend/", module + "/")
-    # 5) 复合名（先于裸名）：压缩包 / 前后端包名 / 根包名
+    # 5) 复合名（先于裸名）：压缩包 / 前后端包名 / 根包名 / miniapp 包名
     s = s.replace("base-backend-deploy", name + "-deploy")
     s = s.replace("base-backend-frontend", name + "-frontend")
     s = s.replace("base-backend-mobile", name + "-mobile")
+    s = s.replace("base-backend-miniapp", name + "-miniapp")
     s = s.replace("base-scaffold", name)
     # 6) JWT Issuer（精确，保留原对齐）
     s = re.sub(r'(Issuer:\s*)"base-backend"', rf'\1"{issuer}"', s)
@@ -157,6 +158,12 @@ for p in targets:
     with open(p, encoding="utf-8") as f:
         old = f.read()
     new = transform(old)
+    # miniapp/src/manifest.json 特例：name 字段应为 <name>（不含 -miniapp 后缀），
+    # mp-weixin.appid 保留基座占位不动（project-init spec）。
+    # 上面的复合替换把 base-backend-miniapp → <name>-miniapp，对 package.json 正确，
+    # 但 manifest.json 的 name 应为 <name>。此处精确修正。
+    if p.endswith("miniapp/src/manifest.json"):
+        new = new.replace(f'"name": "{name}-miniapp"', f'"name": "{name}"')
     if new != old:
         with open(p, "w", encoding="utf-8") as f:
             f.write(new)

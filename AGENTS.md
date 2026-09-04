@@ -6,11 +6,12 @@
 
 ---
 
-## 1. 三端统一
+## 1. 多端统一
 
 - 状态管理目录 MUST 统一为 `stores/`（禁止 `store/` 单复数混用）。
-- 路径别名 `@` 指向 `src/`（前端与移动端一致）。
+- 路径别名 `@` 指向 `src/`（前端、移动端与小程序端一致）。
 - 字段 JSON tag 统一 snake_case（如 `real_name`、`created_at`）。
+- 小程序端页面目录为 `pages/`（uniapp `pages.json` 硬约定，不强求与前端 `views/` 一致）。
 
 ## 2. 依赖登记制
 

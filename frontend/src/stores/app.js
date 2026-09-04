@@ -1,5 +1,40 @@
 import { defineStore } from 'pinia'
 import { getSystemInfo } from '@/api'
+import {
+  applyThemeVars,
+  clearThemeVars,
+  deriveThemeVars,
+  extractDominantColor,
+} from '@/utils/colorExtract'
+
+// BRAND_CACHE_VERSION 缓存结构版本。deriveThemeVars 的输出结构或算法变化时 +1，
+// 让老缓存整体失效——design D5 只覆盖了「换 logo 自动失效」，管不到基座升级后
+// 旧缓存把旧算法算出的色值钉死在本地。
+const BRAND_CACHE_VERSION = 'v1'
+
+// brandCacheKey 把 logo URL 编进缓存 key：换 logo 文件名即自动失效重算（design D5）。
+function brandCacheKey(logoUrl) {
+  return `brand_theme_${BRAND_CACHE_VERSION}_${logoUrl}`
+}
+
+// readBrandCache / writeBrandCache：无痕模式下 localStorage 读写会直接抛错，
+// 故统一 try-catch 静默降级——缓存不可用只影响「少算一次」，不影响主题注入。
+function readBrandCache(key) {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? JSON.parse(raw) : null
+  } catch (e) {
+    return null
+  }
+}
+
+function writeBrandCache(key, vars) {
+  try {
+    localStorage.setItem(key, JSON.stringify(vars))
+  } catch (e) {
+    // 配额满或存储被禁用：放弃缓存，下次重新提取
+  }
+}
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -62,6 +97,43 @@ export const useAppStore = defineStore('app', {
       if (this.isAdmin) return true
       return this.permissions.includes(code)
     },
+    // applyBrandTheme 从 logo 提取主色并注入全站主题变量（brand-color-extract spec）。
+    // 任一环节失败（无 logo / 加载失败 / 纯灰或透明）都回退默认蓝色，
+    // 保证基座零配置开箱即用、视觉与现状一致。
+    async applyBrandTheme(logoUrl) {
+      // 整条链路兜底：本 action 被 fetchSystemInfo 以「即发即忘」方式调用（不 await，
+      // 免得图片加载拖慢品牌信息渲染），故必须自己吞掉所有异常——否则会产生
+      // unhandled rejection，且主题变量停在半注入状态。
+      try {
+        // 回退 = 不注入：清掉可能残留的变量，交回各端 CSS 的 var() fallback。
+        // 不注入默认蓝色是因为两端渐变起点本就不同色，统一注入会让移动端变色。
+        if (!logoUrl) {
+          clearThemeVars()
+          return
+        }
+
+        // 命中缓存：直接注入，不重复做 Canvas 提取
+        const cacheKey = brandCacheKey(logoUrl)
+        const cached = readBrandCache(cacheKey)
+        if (cached) {
+          applyThemeVars(cached)
+          return
+        }
+
+        const primary = await extractDominantColor(logoUrl)
+        // 提取失败（纯灰 / 全透明 / 加载失败）与无 logo 同路径回退
+        if (!primary) {
+          clearThemeVars()
+          return
+        }
+
+        const vars = deriveThemeVars(primary)
+        applyThemeVars(vars)
+        writeBrandCache(cacheKey, vars)
+      } catch (e) {
+        clearThemeVars()
+      }
+    },
     async fetchSystemInfo() {
       try {
         const res = await getSystemInfo()
@@ -73,6 +145,8 @@ export const useAppStore = defineStore('app', {
           this.setFooter(footer || '')
           this.setLoginBg(login_bg || '')
           this.setLoginBgMobile(login_bg_mobile || '')
+          // 品牌色派生必须在拿到 logo 之后：无 logo / 提取失败都回退默认蓝色
+          this.applyBrandTheme(logo || '')
           // 运行时动态设置浏览器标签图标（favicon 跟随 config，而非编译期写死）
           if (favicon) {
             let link = document.querySelector('link[rel="icon"]')

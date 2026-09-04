@@ -21,6 +21,7 @@ func SetupRouter(r *gin.Engine) {
 	auth := api.Group("/auth")
 	{
 		auth.POST("/login", controllers.Login)
+		auth.POST("/mp-login", controllers.MpLogin)
 		auth.POST("/logout", controllers.Logout)
 	}
 

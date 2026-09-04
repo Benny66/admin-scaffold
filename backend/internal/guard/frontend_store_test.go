@@ -117,11 +117,12 @@ func sortedMembers(members map[string]bool) string {
 	return strings.Join(names, ", ")
 }
 
-// Test_StoreMemberReferencesResolve 前端与移动端 store 的所有成员引用都必须可解析。
+// Test_StoreMemberReferencesResolve 前端、移动端与小程序端 store 的所有成员引用都必须可解析。
 func Test_StoreMemberReferencesResolve(t *testing.T) {
 	ends := []jsEnd{
 		{"前端", filepath.Join("frontend", "src")},
 		{"移动端", filepath.Join("mobile", "src")},
+		{"小程序端", filepath.Join("miniapp", "src")},
 	}
 
 	for _, end := range ends {

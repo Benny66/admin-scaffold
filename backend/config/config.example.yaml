@@ -30,3 +30,14 @@ database:
 jwt:
   secret: "base-backend-secret-key-change-me"
   expire_seconds: 3600
+
+# 微信小程序登录配置（仅当需要 mp-login 时填写，由具体项目按需启用）
+#
+# 刻意不接入环境变量覆盖通道（与 app 品牌段一致）：
+# secret 是高敏感凭证，env 易通过子进程 / ps aux / 容器 inspect 泄露，config.yaml 更稳。
+#
+# 未配置时 mp-login 返回 500 + 明确指引，不影响基座开箱启动。
+# 获取方式：微信公众平台 → 开发管理 → 开发设置 查 AppID 与 AppSecret。
+wechat:
+  app_id: ""           # 小程序 AppID（如 "wx0123456789abcdef"）
+  secret: ""           # 小程序 AppSecret

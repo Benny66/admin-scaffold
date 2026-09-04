@@ -2,6 +2,8 @@
 node_modules/
 dist/
 dist-mobile/
+miniapp/dist/
+miniapp/unpackage/
 *.log
 
 # 环境变量（保留 .env.example 提交）

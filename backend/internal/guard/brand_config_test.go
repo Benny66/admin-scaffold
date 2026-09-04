@@ -217,21 +217,29 @@ func overrideCoveredFields(f *ast.File) map[string]struct{} {
 }
 
 // Test_SystemInfoFieldsConsumedByBothEnds G3：GetSystemInfo 返回的每个字段都必须被
-// 前端与移动端 store 的 fetchSystemInfo 解构消费，杜绝死配置复发。
+// 前端、移动端与小程序端 store 的 fetchSystemInfo 解构消费，杜绝死配置复发。
+//
+// miniapp 特例：favicon 字段对小程序端「忽略不报错」——小程序无浏览器标签概念，
+// favicon 在 miniapp 端可不解构消费（brand-config spec 的 miniapp 消费规则）。
 func Test_SystemInfoFieldsConsumedByBothEnds(t *testing.T) {
 	keys := systemInfoResponseKeys(t)
 
 	ends := []struct {
-		name string
-		path string
+		name           string
+		path           string
+		ignoredFields  map[string]bool
 	}{
-		{"前端", filepath.Join(projectRoot(), "frontend", "src", "stores", "app.js")},
-		{"移动端", filepath.Join(projectRoot(), "mobile", "src", "stores", "app.js")},
+		{"前端", filepath.Join(projectRoot(), "frontend", "src", "stores", "app.js"), nil},
+		{"移动端", filepath.Join(projectRoot(), "mobile", "src", "stores", "app.js"), nil},
+		{"小程序端", filepath.Join(projectRoot(), "miniapp", "src", "stores", "app.js"), map[string]bool{"favicon": true}},
 	}
 
 	for _, end := range ends {
 		consumed := storeConsumedFields(t, end.path)
 		for _, key := range keys {
+			if end.ignoredFields != nil && end.ignoredFields[key] {
+				continue
+			}
 			if _, ok := consumed[key]; !ok {
 				t.Errorf("死配置：GetSystemInfo 返回字段 %q，但%s store（%s）的 fetchSystemInfo 未解构消费——"+
 					"请在该文件的 const { ... } = res.data 中补上 %s", key, end.name, end.path, key)

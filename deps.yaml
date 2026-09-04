@@ -55,3 +55,15 @@ mobile:
     reason: 移动端 UI 组件库
   - package: axios
     reason: 移动端 HTTP 请求
+
+miniapp:
+  - package: "@dcloudio/uni-app"
+    reason: uniapp 核心框架（小程序跨端编译基座）
+  - package: "@dcloudio/uni-mp-weixin"
+    reason: 微信小程序编译目标
+  - package: "@dcloudio/vite-plugin-uni"
+    reason: uniapp vite 构建插件
+  - package: vue
+    reason: 小程序端视图框架
+  - package: pinia
+    reason: 小程序端状态管理

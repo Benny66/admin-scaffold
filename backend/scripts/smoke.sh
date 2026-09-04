@@ -72,4 +72,20 @@ if [[ "$CODE" != "200" ]]; then
   exit 1
 fi
 
-echo "✅ 冒烟通过：后端可启动、可登录、可鉴权、可响应"
+echo "==> 命中 mp-login 接口可达性（未配置 wechat 段，期望 code=500 + 明确指引）..."
+MP_RESP="$(curl -sf -X POST "$BASE_URL/api/auth/mp-login" \
+  -H 'Content-Type: application/json' \
+  -d '{"code":"smoke-test"}')"
+MP_CODE="$(printf '%s' "$MP_RESP" | sed -n 's/^{"code":\([0-9]*\).*/\1/p')"
+if [[ "$MP_CODE" != "500" ]]; then
+  echo "❌ mp-login 返回 code=${MP_CODE}，期望 500（未配置 wechat 段）" >&2
+  echo "$MP_RESP" >&2
+  exit 1
+fi
+if ! printf '%s' "$MP_RESP" | grep -q "未配置"; then
+  echo "❌ mp-login 响应未含「未配置」指引：" >&2
+  echo "$MP_RESP" >&2
+  exit 1
+fi
+
+echo "✅ 冒烟通过：后端可启动、可登录、可鉴权、可响应、mp-login 接口可达"

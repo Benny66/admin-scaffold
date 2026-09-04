@@ -11,6 +11,7 @@ type User struct {
 	Avatar      string `gorm:"size:255" json:"avatar"`
 	Status      int    `gorm:"default:1" json:"status"` // 1:启用 0:禁用
 	IsAdmin     bool   `gorm:"default:false" json:"is_admin"`
+	OpenID      string `gorm:"uniqueIndex;size:64" json:"-"` // 微信小程序 openid（可空，仅 mp-login 创建的用户有值；不外泄到 API 响应）
 	Roles       []Role `gorm:"many2many:user_roles;" json:"roles,omitempty"`
 	LastLoginAt string `gorm:"size:30" json:"last_login_at"`
 	LastLoginIP string `gorm:"size:50" json:"last_login_ip"`

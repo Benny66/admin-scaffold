@@ -33,6 +33,7 @@ type depsFile struct {
 	Backend  []depEntry `yaml:"backend"`
 	Frontend []depEntry `yaml:"frontend"`
 	Mobile   []depEntry `yaml:"mobile"`
+	Miniapp  []depEntry `yaml:"miniapp"`
 }
 
 // pkgJSON 用于解析 package.json 的 dependencies 字段。
@@ -93,8 +94,8 @@ func parsePkgJSONDeps(t *testing.T, path string) map[string]bool {
 	return deps
 }
 
-// loadDepsRegistry 解析 deps.yaml，返回三端「已登记依赖」集合。
-func loadDepsRegistry(t *testing.T) (backend, frontend, mobile map[string]bool) {
+// loadDepsRegistry 解析 deps.yaml，返回四端「已登记依赖」集合。
+func loadDepsRegistry(t *testing.T) (backend, frontend, mobile, miniapp map[string]bool) {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join(projectRoot(), "deps.yaml"))
 	if err != nil {
@@ -112,7 +113,7 @@ func loadDepsRegistry(t *testing.T) (backend, frontend, mobile map[string]bool) 
 		}
 		return s
 	}
-	return toSet(reg.Backend), toSet(reg.Frontend), toSet(reg.Mobile)
+	return toSet(reg.Backend), toSet(reg.Frontend), toSet(reg.Mobile), toSet(reg.Miniapp)
 }
 
 // assertBidirectional 双向校验：清单依赖 ⊆ 登记项，且登记项 ⊆ 清单依赖。
@@ -132,9 +133,9 @@ func assertBidirectional(t *testing.T, end string, actual, registered map[string
 	}
 }
 
-// Test_UnregisteredDependency 依赖登记制：三端清单与 deps.yaml 双向一致。
+// Test_UnregisteredDependency 依赖登记制：四端清单与 deps.yaml 双向一致。
 func Test_UnregisteredDependency(t *testing.T) {
-	backend, frontend, mobile := loadDepsRegistry(t)
+	backend, frontend, mobile, miniapp := loadDepsRegistry(t)
 
 	assertBidirectional(t, "backend",
 		parseGoModDirectDeps(t, filepath.Join(backendRoot(), "go.mod")), backend)
@@ -142,4 +143,6 @@ func Test_UnregisteredDependency(t *testing.T) {
 		parsePkgJSONDeps(t, filepath.Join(projectRoot(), "frontend", "package.json")), frontend)
 	assertBidirectional(t, "mobile",
 		parsePkgJSONDeps(t, filepath.Join(projectRoot(), "mobile", "package.json")), mobile)
+	assertBidirectional(t, "miniapp",
+		parsePkgJSONDeps(t, filepath.Join(projectRoot(), "miniapp", "package.json")), miniapp)
 }
